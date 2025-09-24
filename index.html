@@ -3,123 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Meeting Room Booking</title>
+    <title>ระบบจองห้องประชุมอัจฉริยะ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Kanit', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
         .gradient-bg { background: linear-gradient(135deg, #e0f2fe 0%, #f1f8e9 100%); }
-        .card-shadow { box-shadow: 0 4px 20px rgba(0, 150, 136, 0.1); }
-        .btn-primary { background: linear-gradient(135deg, #00bcd4 0%, #26a69a 100%); }
-        .btn-primary:hover { background: linear-gradient(135deg, #00acc1 0%, #00897b 100%); }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+        .btn-primary { background: linear-gradient(135deg, #00bcd4 0%, #26c6da 100%); }
+        .btn-primary:hover { background: linear-gradient(135deg, #0097a7 0%, #00acc1 100%); }
+        .status-available { background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); }
+        .status-booked { background: linear-gradient(135deg, #f44336 0%, #ef5350 100%); }
+        .calendar-day { transition: all 0.3s ease; }
+        .calendar-day:hover { transform: translateY(-2px); }
+        .calendar-day.selected { background: linear-gradient(135deg, #00bcd4 0%, #26c6da 100%); color: white; }
+        .calendar-day.has-booking { background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%); color: white; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-lg">📅</span>
-                    </div>
-                    <h1 class="text-2xl font-bold text-gray-800">ระบบจองห้องประชุมอัจฉริยะ</h1>
-                </div>
-                <div class="flex space-x-4">
-                    <button onclick="showPage('home')" class="px-4 py-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">หน้าหลัก</button>
-                    <button onclick="showPage('myBookings')" class="px-4 py-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">รายการจองของฉัน</button>
-                    <button onclick="showPage('calendar')" class="px-4 py-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">ปฏิทินการจอง</button>
-                    <button onclick="showPage('statistics')" class="px-4 py-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">สถิติการใช้งาน</button>
-                </div>
-            </div>
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🏢 ระบบจองห้องประชุมอัจฉริยะ</h1>
+            <p class="text-lg text-gray-600">Smart Meeting Room Booking System</p>
         </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Home Page -->
-        <div id="homePage" class="page">
-            <div class="text-center mb-8">
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">Smart Meeting Room Booking</h2>
-                <p class="text-lg text-gray-600">จองห้องประชุมได้อย่างง่ายดาย รวดเร็ว และมีประสิทธิภาพ</p>
-                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-sm text-blue-800">
-                        💡 <strong>หมายเหตุ:</strong> ระบบจะบันทึกข้อมูลการจองไปยัง Google Sheets โดยอัตโนมัติ
-                        <br>ข้อมูลจะถูกส่งไปที่: <a href="https://docs.google.com/spreadsheets/d/1IxtGbwoKh7bXDuiEPQ4MH6BDzZtWHcYY4pHgBB9Bki0/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">Google Sheets</a>
-                    </p>
-                </div>
-            </div>
+        <!-- Navigation -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <button onclick="showPage('booking')" class="btn-primary text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                📅 จองห้องประชุม
+            </button>
+            <button onclick="showPage('myBookings')" class="btn-primary text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                📋 รายการจองของฉัน
+            </button>
+            <button onclick="showPage('calendar')" class="btn-primary text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                📆 ปฏิทินการจอง
+            </button>
+            <button onclick="showPage('statistics')" class="btn-primary text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                📊 สถิติการใช้งาน
+            </button>
+        </div>
 
+        <!-- Booking Page -->
+        <div id="bookingPage" class="page">
             <div class="grid lg:grid-cols-2 gap-8">
                 <!-- Date Selection -->
                 <div class="bg-white rounded-xl p-6 card-shadow">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                        📅 เลือกวันที่ (สูงสุด 15 วัน)
-                    </h3>
-                    <div id="datePickerCalendar" class="mb-4">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">📅 เลือกวันที่</h2>
+                    <div id="calendar" class="grid grid-cols-7 gap-2 mb-4">
                         <!-- Calendar will be generated here -->
                     </div>
-                    <div class="text-sm text-gray-600 mb-2">
-                        วันที่เลือก: <span id="selectedDatesDisplay" class="font-medium text-teal-600">ยังไม่ได้เลือก</span>
+                    <div class="text-center">
+                        <button onclick="previousMonth()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg mr-2">← เดือนก่อน</button>
+                        <span id="currentMonth" class="font-semibold text-lg mx-4"></span>
+                        <button onclick="nextMonth()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg ml-2">เดือนถัดไป →</button>
                     </div>
-                    <button onclick="clearSelectedDates()" class="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors">ล้างการเลือก</button>
                 </div>
 
                 <!-- Time Selection -->
                 <div class="bg-white rounded-xl p-6 card-shadow">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                        ⏰ เลือกเวลา
-                    </h3>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">⏰ เลือกเวลา</h2>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">เวลาเริ่มต้น</label>
-                            <select id="startTime" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" onchange="updateEndTimeOptions()">
-                                <option value="">เลือกเวลาเริ่มต้น</option>
+                            <select id="startTime" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                                <!-- Time options will be generated -->
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">เวลาสิ้นสุด</label>
-                            <select id="endTime" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" onchange="updateRoomStatus()">
-                                <option value="">เลือกเวลาสิ้นสุด</option>
+                            <select id="endTime" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                                <!-- Time options will be generated -->
                             </select>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Room List -->
-            <div class="mt-8">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center">รายการห้องประชุม</h3>
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="roomList">
-                    <!-- Rooms will be populated by JavaScript -->
+            <!-- Room Selection -->
+            <div class="bg-white rounded-xl p-6 card-shadow mt-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">🏛️ เลือกห้องประชุม</h2>
+                <div id="roomList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Rooms will be generated here -->
                 </div>
+            </div>
+        </div>
+
+        <!-- Booking Form Modal -->
+        <div id="bookingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 card-shadow">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-6">📝 กรอกข้อมูลการจอง</h3>
+                <form id="bookingForm" onsubmit="submitBooking(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ห้องที่เลือก</label>
+                        <input id="selectedRoom" type="text" readonly class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่และเวลา</label>
+                        <input id="selectedDateTime" type="text" readonly class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">หน่วยงาน</label>
+                        <input id="department" type="text" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วัตถุประสงค์การใช้งาน</label>
+                        <textarea id="purpose" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent" rows="3"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 btn-primary text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
+                            ✅ ยืนยันการจอง
+                        </button>
+                        <button type="button" onclick="closeBookingModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-all duration-300">
+                            ❌ ยกเลิก
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
         <!-- My Bookings Page -->
         <div id="myBookingsPage" class="page hidden">
             <div class="bg-white rounded-xl p-6 card-shadow">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">รายการจองของฉัน</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">📋 รายการจองของฉัน</h2>
                 
                 <!-- Filters -->
-                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามห้อง</label>
-                        <select id="roomFilter" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" onchange="filterBookings()">
+                        <select id="roomFilter" onchange="filterMyBookings()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
                             <option value="">ทุกห้อง</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามวันที่</label>
-                        <input type="date" id="dateFilter" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" onchange="filterBookings()">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="clearFilters()" class="w-full px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">ล้างตัวกรอง</button>
+                        <input id="dateFilter" type="date" onchange="filterMyBookings()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
                     </div>
                 </div>
 
                 <div id="myBookingsList">
-                    <!-- Bookings will be populated by JavaScript -->
+                    <!-- My bookings will be displayed here -->
                 </div>
             </div>
         </div>
@@ -127,358 +150,269 @@
         <!-- Calendar Page -->
         <div id="calendarPage" class="page hidden">
             <div class="bg-white rounded-xl p-6 card-shadow">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">ปฏิทินการจอง</h2>
-                    <div class="flex items-center space-x-4">
-                        <button onclick="changeMonth(-1)" class="px-3 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors">◀ เดือนก่อน</button>
-                        <span id="currentMonthYear" class="text-lg font-semibold text-gray-700"></span>
-                        <button onclick="changeMonth(1)" class="px-3 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors">เดือนถัดไป ▶</button>
-                    </div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">📆 ปฏิทินการจองทั้งหมด</h2>
+                <div class="text-center mb-6">
+                    <button onclick="previousCalendarMonth()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg mr-2">← เดือนก่อน</button>
+                    <span id="calendarCurrentMonth" class="font-semibold text-xl mx-4"></span>
+                    <button onclick="nextCalendarMonth()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg ml-2">เดือนถัดไป →</button>
                 </div>
-                
-                <!-- Room Filter -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามห้อง</label>
-                    <select id="calendarRoomFilter" class="w-full md:w-64 p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" onchange="updateCalendarView()">
-                        <option value="">ทุกห้อง</option>
-                    </select>
-                </div>
-                
-                <div id="monthlyCalendarView">
-                    <!-- Monthly calendar will be populated by JavaScript -->
-                </div>
-                
-                <!-- Room-wise booking list -->
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">รายการจองแยกตามห้อง</h3>
-                    <div id="roomWiseBookings">
-                        <!-- Room-wise bookings will be populated by JavaScript -->
-                    </div>
+                <div id="fullCalendar" class="grid grid-cols-7 gap-2">
+                    <!-- Full calendar will be generated here -->
                 </div>
             </div>
         </div>
 
         <!-- Statistics Page -->
         <div id="statisticsPage" class="page hidden">
-            <div class="bg-white rounded-xl p-6 card-shadow">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">สถิติการใช้งาน</h2>
-                <div class="grid md:grid-cols-3 gap-6" id="statisticsContent">
-                    <!-- Statistics will be populated by JavaScript -->
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">📊 สถิติการใช้งาน</h2>
+                    <div id="statisticsContent">
+                        <!-- Statistics will be displayed here -->
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">📈 กราฟการใช้งาน</h2>
+                    <div id="chartContent">
+                        <!-- Chart will be displayed here -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Booking Modal -->
-    <div id="bookingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-xl font-bold text-gray-800 mb-6">จองห้องประชุม</h3>
-            <form id="bookingForm" onsubmit="submitBooking(event)">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">ห้องประชุม</label>
-                        <input type="text" id="modalRoomName" class="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-100" readonly>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
-                        <input type="date" id="modalDate" class="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-100" readonly>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">เวลาเริ่มต้น</label>
-                            <input type="text" id="modalStartTime" class="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-100" readonly>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">เวลาสิ้นสุด</label>
-                            <input type="text" id="modalEndTime" class="w-full p-3 border-2 border-gray-200 rounded-lg bg-gray-100" readonly>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อผู้จอง *</label>
-                        <input type="text" id="bookerName" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์ *</label>
-                        <input type="tel" id="bookerPhone" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">วัตถุประสงค์การใช้งาน *</label>
-                        <textarea id="purpose" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none h-24" required></textarea>
-                    </div>
+        <!-- Cancel Booking Modal -->
+        <div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 card-shadow">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-6">🔐 ยกเลิกการจอง</h3>
+                <p class="text-gray-600 mb-4">หากต้องการยกเลิกโปรดติดต่องานวิชาการ</p>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">กรอกรหัส</label>
+                    <input id="cancelCode" type="password" placeholder="กรอกรหัส 1234" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
                 </div>
-                <div class="flex space-x-4 mt-6">
-                    <button type="button" onclick="closeBookingModal()" class="flex-1 px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">ยกเลิก</button>
-                    <button type="submit" class="flex-1 px-4 py-3 btn-primary text-white rounded-lg hover:shadow-lg transition-all">ยืนยันการจอง</button>
+                <div class="flex gap-4">
+                    <button onclick="confirmCancel()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-medium transition-all duration-300">
+                        ✅ ยืนยันยกเลิก
+                    </button>
+                    <button onclick="closeCancelModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-all duration-300">
+                        ❌ ปิด
+                    </button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Cancel Booking Modal -->
-    <div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">ยกเลิกการจอง</h3>
-            <p class="text-gray-600 mb-4">หากต้องการยกเลิกโปรดติดต่องานวิชาการ</p>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสยืนยัน</label>
-                <input type="text" id="cancelCode" class="w-full p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" placeholder="กรอกรหัส 1234">
-            </div>
-            <div class="flex space-x-4">
-                <button onclick="closeCancelModal()" class="flex-1 px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">ปิด</button>
-                <button onclick="confirmCancel()" class="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">ยืนยันยกเลิก</button>
             </div>
         </div>
     </div>
 
     <script>
         // Global variables
-        let rooms = [
-            { id: 1, name: 'ห้องUSR(1-101)', capacity: 70, location: 'อาคาร 1 ชั้น 1' },
-            { id: 2, name: 'ห้องสัมมนา', capacity: 80, location: 'อาคาร 3 ชั้น 1' },
-            { id: 3, name: 'ห้องประชุมพุคยาภรณ์ 1', capacity: 360, location: 'อาคาร 3 ชั้น 1' },
-            { id: 4, name: 'ห้องประชุมพุคยาภรณ์ 2 (3-206)', capacity: 120, location: 'อาคาร 3 ชั้น 2' },
-            { id: 5, name: 'ห้องประชุมผู้บริหาร 3-202', capacity: 40, location: 'อาคาร 3 ชั้น 2' }
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let calendarDate = new Date();
+        let bookings = JSON.parse(localStorage.getItem('meetingBookings')) || [];
+        let currentBookingToCancel = null;
+
+        // Room data
+        const rooms = [
+            { id: 'usr', name: 'ห้องUSR(1-101)', capacity: 70, location: 'อาคาร 1 ชั้น 1' },
+            { id: 'seminar', name: 'ห้องสัมมนา', capacity: 80, location: 'อาคาร 3 ชั้น 1' },
+            { id: 'pukya1', name: 'ห้องประชุมพุคยาภรณ์ 1', capacity: 360, location: 'อาคาร 3 ชั้น 1' },
+            { id: 'pukya2', name: 'ห้องประชุมพุคยาภรณ์ 2 (3-206)', capacity: 120, location: 'อาคาร 3 ชั้น 2' },
+            { id: 'executive', name: 'ห้องประชุมผู้บริหาร 3-202', capacity: 40, location: 'อาคาร 3 ชั้น 2' }
         ];
 
-        let bookings = [];
-        let currentBookingId = null;
-        let selectedDates = [];
-        let currentCalendarDate = new Date();
-        let currentViewDate = new Date();
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            initializePage();
-        });
-
-        function initializePage() {
-            // Generate time options
-            generateTimeOptions();
-            
-            // Populate room filters
-            populateRoomFilters();
-            
-            // Generate date picker calendar
-            generateDatePickerCalendar();
-            
-            // Initial room status update
-            updateRoomStatus();
-            
-            // Show statistics
-            updateStatistics();
-        }
-
-        function generateTimeOptions() {
-            const startSelect = document.getElementById('startTime');
-            const times = [];
-            
-            // Generate times from 09:00 to 20:30 with 30-minute intervals
+        // Time slots
+        function generateTimeSlots() {
+            const slots = [];
             for (let hour = 9; hour <= 20; hour++) {
                 for (let minute = 0; minute < 60; minute += 30) {
                     if (hour === 20 && minute > 30) break;
                     const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    times.push(timeStr);
+                    slots.push(timeStr);
                 }
             }
+            return slots;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTimeSlots();
+            generateCalendar();
+            generateRoomList();
+            updateMyBookings();
+            updateStatistics();
+            populateRoomFilter();
             
-            times.forEach(time => {
-                const option = document.createElement('option');
-                option.value = time;
-                option.textContent = time;
-                startSelect.appendChild(option);
+            // Set default selected date to today
+            selectedDate = new Date();
+            updateRoomAvailability();
+        });
+
+        function initializeTimeSlots() {
+            const startTimeSelect = document.getElementById('startTime');
+            const endTimeSelect = document.getElementById('endTime');
+            const timeSlots = generateTimeSlots();
+
+            timeSlots.forEach(time => {
+                const option1 = new Option(time, time);
+                const option2 = new Option(time, time);
+                startTimeSelect.add(option1);
+                endTimeSelect.add(option2);
             });
-        }
 
-        function updateEndTimeOptions() {
-            const startTime = document.getElementById('startTime').value;
-            const endSelect = document.getElementById('endTime');
-            
-            endSelect.innerHTML = '<option value="">เลือกเวลาสิ้นสุด</option>';
-            
-            if (!startTime) return;
-            
-            const [startHour, startMinute] = startTime.split(':').map(Number);
-            const startTotalMinutes = startHour * 60 + startMinute;
-            
-            // Generate end time options (minimum 30 minutes after start time)
-            for (let hour = 9; hour <= 20; hour++) {
-                for (let minute = 0; minute < 60; minute += 30) {
-                    if (hour === 20 && minute > 30) break;
-                    
-                    const totalMinutes = hour * 60 + minute;
-                    if (totalMinutes > startTotalMinutes) {
-                        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                        const option = document.createElement('option');
-                        option.value = timeStr;
-                        option.textContent = timeStr;
-                        endSelect.appendChild(option);
-                    }
+            // Set default end time to 1 hour after start time
+            startTimeSelect.addEventListener('change', function() {
+                const startIndex = timeSlots.indexOf(this.value);
+                if (startIndex >= 0 && startIndex < timeSlots.length - 1) {
+                    endTimeSelect.value = timeSlots[startIndex + 2] || timeSlots[timeSlots.length - 1];
                 }
-            }
-            
-            updateRoomStatus();
+                updateRoomAvailability();
+            });
+
+            endTimeSelect.addEventListener('change', updateRoomAvailability);
         }
 
-        function generateDatePickerCalendar() {
-            const calendar = document.getElementById('datePickerCalendar');
-            const today = new Date();
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-            
-            // Month names in Thai
-            const monthNames = [
-                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-            ];
-            
-            // Day names in Thai
+        function generateCalendar() {
+            const calendar = document.getElementById('calendar');
+            const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                              'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
             const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-            
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
-            
-            let calendarHTML = `
-                <div class="flex justify-between items-center mb-4">
-                    <button onclick="changeCalendarMonth(-1)" class="px-2 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors">◀</button>
-                    <h4 class="text-lg font-semibold text-gray-800">${monthNames[month]} ${year + 543}</h4>
-                    <button onclick="changeCalendarMonth(1)" class="px-2 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors">▶</button>
-                </div>
-                <div class="grid grid-cols-7 gap-1 mb-2">
-            `;
-            
+
+            document.getElementById('currentMonth').textContent = 
+                `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear() + 543}`;
+
+            calendar.innerHTML = '';
+
             // Add day headers
             dayNames.forEach(day => {
-                calendarHTML += `<div class="text-center text-sm font-medium text-gray-600 p-2">${day}</div>`;
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'text-center font-semibold text-gray-600 py-2';
+                dayHeader.textContent = day;
+                calendar.appendChild(dayHeader);
             });
-            
-            calendarHTML += '</div><div class="grid grid-cols-7 gap-1">';
-            
-            // Add calendar days
-            const currentDate = new Date(startDate);
+
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
             for (let i = 0; i < 42; i++) {
-                const dateStr = currentDate.toISOString().split('T')[0];
-                const isCurrentMonth = currentDate.getMonth() === month;
-                const isPast = currentDate < today;
-                const isSelected = selectedDates.includes(dateStr);
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day text-center p-3 rounded-lg cursor-pointer border';
                 
-                let dayClass = 'p-2 text-center text-sm cursor-pointer rounded transition-colors ';
-                
-                if (!isCurrentMonth) {
-                    dayClass += 'text-gray-300 ';
-                } else if (isPast) {
-                    dayClass += 'text-gray-400 cursor-not-allowed ';
-                } else if (isSelected) {
-                    dayClass += 'bg-teal-500 text-white ';
+                if (date.getMonth() !== currentDate.getMonth()) {
+                    dayElement.className += ' text-gray-400 bg-gray-50';
                 } else {
-                    dayClass += 'text-gray-700 hover:bg-teal-100 ';
+                    dayElement.className += ' text-gray-800 bg-white hover:bg-cyan-50';
                 }
-                
-                const clickHandler = (!isPast && isCurrentMonth) ? `onclick="toggleDateSelection('${dateStr}')"` : '';
-                
-                calendarHTML += `<div class="${dayClass}" ${clickHandler}>${currentDate.getDate()}</div>`;
-                
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-            
-            calendarHTML += '</div>';
-            calendar.innerHTML = calendarHTML;
-            
-            updateSelectedDatesDisplay();
-        }
-        
-        function changeCalendarMonth(direction) {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
-            generateDatePickerCalendar();
-        }
-        
-        function toggleDateSelection(dateStr) {
-            const index = selectedDates.indexOf(dateStr);
-            
-            if (index > -1) {
-                selectedDates.splice(index, 1);
-            } else {
-                if (selectedDates.length >= 15) {
-                    alert('สามารถเลือกได้สูงสุด 15 วัน');
-                    return;
+
+                if (date.toDateString() === new Date().toDateString()) {
+                    dayElement.className += ' ring-2 ring-cyan-400';
                 }
-                selectedDates.push(dateStr);
-            }
-            
-            selectedDates.sort();
-            generateDatePickerCalendar();
-            updateRoomStatus();
-        }
-        
-        function clearSelectedDates() {
-            selectedDates = [];
-            generateDatePickerCalendar();
-            updateRoomStatus();
-        }
-        
-        function updateSelectedDatesDisplay() {
-            const display = document.getElementById('selectedDatesDisplay');
-            if (selectedDates.length === 0) {
-                display.textContent = 'ยังไม่ได้เลือก';
-            } else {
-                display.textContent = `${selectedDates.length} วัน (${selectedDates[0]} ${selectedDates.length > 1 ? '- ' + selectedDates[selectedDates.length - 1] : ''})`;
+
+                if (date.toDateString() === selectedDate.toDateString()) {
+                    dayElement.className += ' selected';
+                }
+
+                // Check if this date has bookings
+                const hasBookings = bookings.some(booking => 
+                    new Date(booking.date).toDateString() === date.toDateString()
+                );
+                if (hasBookings && date.getMonth() === currentDate.getMonth()) {
+                    dayElement.className += ' has-booking';
+                }
+
+                dayElement.textContent = date.getDate();
+                dayElement.addEventListener('click', () => selectDate(date));
+                calendar.appendChild(dayElement);
             }
         }
 
-        function updateRoomStatus() {
-            const startTime = document.getElementById('startTime').value;
-            const endTime = document.getElementById('endTime').value;
+        function selectDate(date) {
+            if (date < new Date().setHours(0,0,0,0)) return; // Prevent selecting past dates
             
+            selectedDate = new Date(date);
+            generateCalendar();
+            updateRoomAvailability();
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar();
+        }
+
+        function generateRoomList() {
             const roomList = document.getElementById('roomList');
             roomList.innerHTML = '';
-            
+
             rooms.forEach(room => {
-                let isAnyDateBooked = false;
-                
-                // Check if any selected date has booking conflicts
-                if (selectedDates.length > 0) {
-                    isAnyDateBooked = selectedDates.some(date => 
-                        checkRoomAvailability(room.id, date, startTime, endTime)
-                    );
-                }
-                
-                const statusClass = isAnyDateBooked ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200';
-                const statusIcon = isAnyDateBooked ? '❌' : '✅';
-                const statusText = isAnyDateBooked ? 'มีวันที่จองแล้ว' : 'ว่าง';
-                const buttonDisabled = isAnyDateBooked || selectedDates.length === 0 || !startTime || !endTime;
-                
                 const roomCard = document.createElement('div');
-                roomCard.className = `${statusClass} border-2 rounded-xl p-6 card-shadow transition-all hover:shadow-lg`;
+                roomCard.className = 'bg-gradient-to-br from-white to-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1';
                 roomCard.innerHTML = `
                     <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-lg font-semibold text-gray-800">${room.name}</h4>
-                        <span class="text-2xl">${statusIcon}</span>
+                        <h3 class="text-lg font-semibold text-gray-800">${room.name}</h3>
+                        <span id="status-${room.id}" class="px-3 py-1 rounded-full text-sm font-medium"></span>
                     </div>
-                    <div class="space-y-2 mb-4">
-                        <p class="text-sm text-gray-600">📍 ${room.location}</p>
-                        <p class="text-sm text-gray-600">👥 จุได้ ${room.capacity} คน</p>
-                        <p class="text-sm font-medium ${isAnyDateBooked ? 'text-red-600' : 'text-green-600'}">${statusText}</p>
-                        ${selectedDates.length > 0 ? `<p class="text-xs text-gray-500">วันที่เลือก: ${selectedDates.length} วัน</p>` : ''}
+                    <div class="text-gray-600 mb-4">
+                        <p>📍 ${room.location}</p>
+                        <p>👥 จุได้ ${room.capacity} คน</p>
                     </div>
-                    <button 
-                        onclick="openBookingModal(${room.id})" 
-                        class="w-full px-4 py-2 btn-primary text-white rounded-lg hover:shadow-lg transition-all ${buttonDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
-                        ${buttonDisabled ? 'disabled' : ''}
-                    >
-                        ${buttonDisabled ? (selectedDates.length === 0 ? 'เลือกวันที่ก่อน' : (isAnyDateBooked ? 'มีวันที่ไม่ว่าง' : 'เลือกเวลาก่อน')) : 'จองห้องนี้'}
+                    <button id="btn-${room.id}" onclick="selectRoom('${room.id}')" 
+                            class="w-full py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105">
+                        เลือกห้องนี้
                     </button>
                 `;
                 roomList.appendChild(roomCard);
             });
+
+            updateRoomAvailability();
+        }
+
+        function updateRoomAvailability() {
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            
+            if (!startTime || !endTime || startTime >= endTime) {
+                rooms.forEach(room => {
+                    const statusElement = document.getElementById(`status-${room.id}`);
+                    const buttonElement = document.getElementById(`btn-${room.id}`);
+                    statusElement.textContent = '⚠️ เลือกเวลา';
+                    statusElement.className = 'px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800';
+                    buttonElement.disabled = true;
+                    buttonElement.className = 'w-full py-3 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed';
+                });
+                return;
+            }
+
+            rooms.forEach(room => {
+                const isAvailable = checkRoomAvailability(room.id, selectedDate, startTime, endTime);
+                const statusElement = document.getElementById(`status-${room.id}`);
+                const buttonElement = document.getElementById(`btn-${room.id}`);
+
+                if (isAvailable) {
+                    statusElement.textContent = '✅ ว่าง';
+                    statusElement.className = 'px-3 py-1 rounded-full text-sm font-medium status-available text-white';
+                    buttonElement.disabled = false;
+                    buttonElement.className = 'w-full py-3 rounded-lg font-medium btn-primary text-white hover:shadow-lg transition-all duration-300 transform hover:scale-105';
+                } else {
+                    statusElement.textContent = '❌ จองแล้ว';
+                    statusElement.className = 'px-3 py-1 rounded-full text-sm font-medium status-booked text-white';
+                    buttonElement.disabled = true;
+                    buttonElement.className = 'w-full py-3 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed';
+                }
+            });
         }
 
         function checkRoomAvailability(roomId, date, startTime, endTime) {
-            if (!date || !startTime || !endTime) return false;
-            
-            return bookings.some(booking => 
+            const dateStr = date.toISOString().split('T')[0];
+            return !bookings.some(booking => 
                 booking.roomId === roomId && 
-                booking.date === date && 
+                booking.date === dateStr &&
                 booking.status === 'confirmed' &&
                 ((startTime >= booking.startTime && startTime < booking.endTime) ||
                  (endTime > booking.startTime && endTime <= booking.endTime) ||
@@ -486,542 +420,310 @@
             );
         }
 
-        function openBookingModal(roomId) {
+        function selectRoom(roomId) {
             const room = rooms.find(r => r.id === roomId);
             const startTime = document.getElementById('startTime').value;
             const endTime = document.getElementById('endTime').value;
-            
-            document.getElementById('modalRoomName').value = room.name;
-            document.getElementById('modalDate').value = selectedDates.join(', ');
-            document.getElementById('modalStartTime').value = startTime;
-            document.getElementById('modalEndTime').value = endTime;
-            
-            // Clear form
-            document.getElementById('bookerName').value = '';
-            document.getElementById('bookerPhone').value = '';
-            document.getElementById('purpose').value = '';
+
+            if (!startTime || !endTime || startTime >= endTime) {
+                alert('กรุณาเลือกเวลาที่ถูกต้อง');
+                return;
+            }
+
+            document.getElementById('selectedRoom').value = room.name;
+            document.getElementById('selectedDateTime').value = 
+                `${selectedDate.toLocaleDateString('th-TH')} เวลา ${startTime} - ${endTime}`;
             
             document.getElementById('bookingModal').classList.remove('hidden');
+            document.getElementById('bookingModal').classList.add('flex');
         }
 
         function closeBookingModal() {
             document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('bookingModal').classList.remove('flex');
+            document.getElementById('bookingForm').reset();
         }
 
-        async function submitBooking(event) {
+        function submitBooking(event) {
             event.preventDefault();
             
-            const roomName = document.getElementById('modalRoomName').value;
+            const roomName = document.getElementById('selectedRoom').value;
             const room = rooms.find(r => r.name === roomName);
-            const startTime = document.getElementById('modalStartTime').value;
-            const endTime = document.getElementById('modalEndTime').value;
-            const bookerName = document.getElementById('bookerName').value;
-            const bookerPhone = document.getElementById('bookerPhone').value;
+            const department = document.getElementById('department').value;
             const purpose = document.getElementById('purpose').value;
-            
-            // Show loading state
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'กำลังบันทึก...';
-            submitBtn.disabled = true;
-            
-            try {
-                // Create bookings for each selected date
-                const newBookings = [];
-                for (const date of selectedDates) {
-                    const booking = {
-                        id: Date.now() + Math.random(),
-                        roomId: room.id,
-                        roomName: room.name,
-                        date: date,
-                        startTime: startTime,
-                        endTime: endTime,
-                        bookerName: bookerName,
-                        bookerPhone: bookerPhone,
-                        purpose: purpose,
-                        status: 'confirmed',
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    // Send each booking to Google Sheets
-                    await saveToGoogleSheets(booking);
-                    newBookings.push(booking);
-                }
-                
-                bookings.push(...newBookings);
-                closeBookingModal();
-                
-                // Clear selected dates after successful booking
-                selectedDates = [];
-                generateDatePickerCalendar();
-                
-                updateRoomStatus();
-                updateMyBookings();
-                updateStatistics();
-                
-                alert(`จองห้องประชุมเรียบร้อยแล้ว! จองทั้งหมด ${newBookings.length} วัน ข้อมูลถูกบันทึกใน Google Sheets แล้ว`);
-            } catch (error) {
-                console.error('Error saving to Google Sheets:', error);
-                
-                // Still save locally even if Google Sheets fails
-                const newBookings = [];
-                for (const date of selectedDates) {
-                    const booking = {
-                        id: Date.now() + Math.random(),
-                        roomId: room.id,
-                        roomName: room.name,
-                        date: date,
-                        startTime: startTime,
-                        endTime: endTime,
-                        bookerName: bookerName,
-                        bookerPhone: bookerPhone,
-                        purpose: purpose,
-                        status: 'confirmed',
-                        createdAt: new Date().toISOString()
-                    };
-                    newBookings.push(booking);
-                }
-                
-                bookings.push(...newBookings);
-                closeBookingModal();
-                
-                // Clear selected dates after booking
-                selectedDates = [];
-                generateDatePickerCalendar();
-                
-                updateRoomStatus();
-                updateMyBookings();
-                updateStatistics();
-                
-                alert(`จองห้องประชุมเรียบร้อยแล้ว! จองทั้งหมด ${newBookings.length} วัน (หมายเหตุ: ไม่สามารถบันทึกใน Google Sheets ได้ในขณะนี้)`);
-            } finally {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        }
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
 
-        async function saveToGoogleSheets(booking) {
-            // Google Apps Script Web App URL - คุณจะต้องสร้าง Google Apps Script และใส่ URL ที่นี่
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6exP-Dt9gQLsQZkOd56CZ-c5qOm6xzfC5smjsx6STM69Ek9MjSb9Phlw2Zpx8zxCc/exec';
-            
-            const data = {
-                timestamp: new Date().toLocaleString('th-TH'),
-                bookingId: booking.id,
-                roomName: booking.roomName,
-                date: booking.date,
-                startTime: booking.startTime,
-                endTime: booking.endTime,
-                bookerName: booking.bookerName,
-                bookerPhone: booking.bookerPhone,
-                purpose: booking.purpose,
-                status: booking.status
+            const booking = {
+                id: Date.now(),
+                roomId: room.id,
+                roomName: room.name,
+                date: selectedDate.toISOString().split('T')[0],
+                startTime: startTime,
+                endTime: endTime,
+                department: department,
+                purpose: purpose,
+                status: 'confirmed',
+                createdAt: new Date().toISOString()
             };
-            
-            // For demo purposes, we'll simulate the API call
-            // In real implementation, uncomment the fetch code below
-            
-            /*
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to save to Google Sheets');
-            }
-            
-            return await response.json();
-            */
-            
-            // Simulate successful save for demo
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    console.log('Data that would be sent to Google Sheets:', data);
-                    resolve({ success: true });
-                }, 1000);
-            });
+
+            bookings.push(booking);
+            localStorage.setItem('meetingBookings', JSON.stringify(bookings));
+
+            alert('✅ จองห้องประชุมเรียบร้อยแล้ว!');
+            closeBookingModal();
+            updateRoomAvailability();
+            generateCalendar();
+            updateMyBookings();
+            updateStatistics();
         }
 
-        function showPage(pageId) {
+        function showPage(pageName) {
             // Hide all pages
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.add('hidden');
             });
-            
-            // Show selected page
-            document.getElementById(pageId + 'Page').classList.remove('hidden');
-            
-            if (pageId === 'myBookings') {
-                updateMyBookings();
-            } else if (pageId === 'calendar') {
-                updateCalendarView();
-            } else if (pageId === 'statistics') {
-                updateStatistics();
-            }
-        }
 
-        function populateRoomFilters() {
-            const roomFilter = document.getElementById('roomFilter');
-            const calendarRoomFilter = document.getElementById('calendarRoomFilter');
-            
-            rooms.forEach(room => {
-                // For my bookings filter
-                const option = document.createElement('option');
-                option.value = room.id;
-                option.textContent = room.name;
-                roomFilter.appendChild(option);
-                
-                // For calendar filter
-                const calendarOption = document.createElement('option');
-                calendarOption.value = room.id;
-                calendarOption.textContent = room.name;
-                calendarRoomFilter.appendChild(calendarOption);
-            });
+            // Show selected page
+            document.getElementById(pageName + 'Page').classList.remove('hidden');
+
+            // Update specific page content
+            if (pageName === 'calendar') {
+                generateFullCalendar();
+            } else if (pageName === 'statistics') {
+                updateStatistics();
+            } else if (pageName === 'myBookings') {
+                updateMyBookings();
+            }
         }
 
         function updateMyBookings() {
-            const bookingsList = document.getElementById('myBookingsList');
+            const myBookingsList = document.getElementById('myBookingsList');
             const roomFilter = document.getElementById('roomFilter').value;
             const dateFilter = document.getElementById('dateFilter').value;
-            
+
             let filteredBookings = bookings.filter(booking => booking.status === 'confirmed');
-            
+
             if (roomFilter) {
-                filteredBookings = filteredBookings.filter(booking => booking.roomId == roomFilter);
+                filteredBookings = filteredBookings.filter(booking => booking.roomId === roomFilter);
             }
-            
+
             if (dateFilter) {
                 filteredBookings = filteredBookings.filter(booking => booking.date === dateFilter);
             }
-            
+
             if (filteredBookings.length === 0) {
-                bookingsList.innerHTML = '<p class="text-center text-gray-500 py-8">ไม่มีรายการจอง</p>';
+                myBookingsList.innerHTML = '<p class="text-center text-gray-500 py-8">ไม่มีรายการจอง</p>';
                 return;
             }
-            
-            bookingsList.innerHTML = filteredBookings.map(booking => `
-                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+
+            myBookingsList.innerHTML = filteredBookings.map(booking => `
+                <div class="bg-gradient-to-r from-cyan-50 to-green-50 rounded-lg p-6 mb-4 border border-cyan-200">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">${booking.roomName}</h4>
-                            <p class="text-sm text-gray-600">👤 ${booking.bookerName}</p>
-                            <p class="text-sm text-gray-600">📅 ${booking.date}</p>
-                            <p class="text-sm text-gray-600">⏰ ${booking.startTime} - ${booking.endTime}</p>
-                            <p class="text-sm text-gray-600">📝 ${booking.purpose}</p>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">${booking.roomName}</h3>
+                            <div class="text-gray-600 space-y-1">
+                                <p>📅 วันที่: ${new Date(booking.date).toLocaleDateString('th-TH')}</p>
+                                <p>⏰ เวลา: ${booking.startTime} - ${booking.endTime}</p>
+                                <p>🏢 หน่วยงาน: ${booking.department}</p>
+                                <p>📝 วัตถุประสงค์: ${booking.purpose}</p>
+                            </div>
                         </div>
-                        <button 
-                            onclick="openCancelModal(${booking.id})" 
-                            class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-colors"
-                        >
-                            ยกเลิก
-                        </button>
+                        <div class="flex flex-col gap-2">
+                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                ✅ ยืนยันแล้ว
+                            </span>
+                            <button onclick="cancelBooking(${booking.id})" 
+                                    class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all duration-300">
+                                🗑️ ยกเลิก
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function filterBookings() {
+        function populateRoomFilter() {
+            const roomFilter = document.getElementById('roomFilter');
+            roomFilter.innerHTML = '<option value="">ทุกห้อง</option>';
+            rooms.forEach(room => {
+                const option = new Option(room.name, room.id);
+                roomFilter.add(option);
+            });
+        }
+
+        function filterMyBookings() {
             updateMyBookings();
         }
 
-        function clearFilters() {
-            document.getElementById('roomFilter').value = '';
-            document.getElementById('dateFilter').value = '';
-            updateMyBookings();
-        }
-
-        function openCancelModal(bookingId) {
-            currentBookingId = bookingId;
-            document.getElementById('cancelCode').value = '';
+        function cancelBooking(bookingId) {
+            currentBookingToCancel = bookingId;
             document.getElementById('cancelModal').classList.remove('hidden');
+            document.getElementById('cancelModal').classList.add('flex');
         }
 
         function closeCancelModal() {
             document.getElementById('cancelModal').classList.add('hidden');
-            currentBookingId = null;
+            document.getElementById('cancelModal').classList.remove('flex');
+            document.getElementById('cancelCode').value = '';
+            currentBookingToCancel = null;
         }
 
         function confirmCancel() {
             const code = document.getElementById('cancelCode').value;
             if (code !== '1234') {
-                alert('รหัสไม่ถูกต้อง');
+                alert('❌ รหัสไม่ถูกต้อง');
                 return;
             }
-            
-            const bookingIndex = bookings.findIndex(b => b.id === currentBookingId);
+
+            const bookingIndex = bookings.findIndex(b => b.id === currentBookingToCancel);
             if (bookingIndex !== -1) {
                 bookings[bookingIndex].status = 'cancelled';
+                localStorage.setItem('meetingBookings', JSON.stringify(bookings));
+                alert('✅ ยกเลิกการจองเรียบร้อยแล้ว');
                 closeCancelModal();
                 updateMyBookings();
-                updateRoomStatus();
+                updateRoomAvailability();
+                generateCalendar();
                 updateStatistics();
-                alert('ยกเลิกการจองเรียบร้อยแล้ว');
             }
         }
 
-        function updateCalendarView() {
-            updateMonthlyCalendarView();
-            updateRoomWiseBookings();
-        }
-        
-        function updateMonthlyCalendarView() {
-            const calendarView = document.getElementById('monthlyCalendarView');
-            const roomFilter = document.getElementById('calendarRoomFilter').value;
-            let confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-            
-            // Apply room filter
-            if (roomFilter) {
-                confirmedBookings = confirmedBookings.filter(b => b.roomId == roomFilter);
-            }
-            
-            const year = currentViewDate.getFullYear();
-            const month = currentViewDate.getMonth();
-            
-            // Month names in Thai
-            const monthNames = [
-                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-            ];
-            
-            // Day names in Thai
+        function generateFullCalendar() {
+            const fullCalendar = document.getElementById('fullCalendar');
+            const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                              'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
             const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-            
-            // Update month/year display
-            document.getElementById('currentMonthYear').textContent = `${monthNames[month]} ${year + 543}`;
-            
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
-            
-            // Group bookings by date for this month
-            const bookingsByDate = {};
-            confirmedBookings.forEach(booking => {
-                const bookingDate = new Date(booking.date);
-                if (bookingDate.getMonth() === month && bookingDate.getFullYear() === year) {
-                    const dateStr = booking.date;
-                    if (!bookingsByDate[dateStr]) {
-                        bookingsByDate[dateStr] = [];
-                    }
-                    bookingsByDate[dateStr].push(booking);
-                }
-            });
-            
-            // Room colors for visual distinction
-            const roomColors = [
-                'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500',
-                'bg-indigo-500', 'bg-pink-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500'
-            ];
-            
-            let calendarHTML = `
-                <div class="grid grid-cols-7 gap-1 mb-2">
-            `;
-            
+
+            document.getElementById('calendarCurrentMonth').textContent = 
+                `${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear() + 543}`;
+
+            fullCalendar.innerHTML = '';
+
             // Add day headers
             dayNames.forEach(day => {
-                calendarHTML += `<div class="text-center text-sm font-medium text-gray-600 p-2 bg-gray-50 rounded">${day}</div>`;
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'text-center font-semibold text-gray-600 py-3 bg-gray-100 rounded-lg';
+                dayHeader.textContent = day;
+                fullCalendar.appendChild(dayHeader);
             });
-            
-            calendarHTML += '</div><div class="grid grid-cols-7 gap-1">';
-            
-            // Add calendar days
-            const currentDate = new Date(startDate);
+
+            const firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+            const lastDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
             for (let i = 0; i < 42; i++) {
-                const dateStr = currentDate.toISOString().split('T')[0];
-                const isCurrentMonth = currentDate.getMonth() === month;
-                const dayBookings = bookingsByDate[dateStr] || [];
-                const hasBookings = dayBookings.length > 0;
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const dayElement = document.createElement('div');
+                dayElement.className = 'min-h-24 p-2 border border-gray-200 rounded-lg';
                 
-                let dayClass = 'min-h-[100px] p-1 border border-gray-200 rounded ';
-                
-                if (!isCurrentMonth) {
-                    dayClass += 'bg-gray-50 text-gray-300 ';
-                } else if (hasBookings) {
-                    dayClass += 'bg-blue-50 ';
+                if (date.getMonth() !== calendarDate.getMonth()) {
+                    dayElement.className += ' bg-gray-50 text-gray-400';
                 } else {
-                    dayClass += 'bg-white ';
+                    dayElement.className += ' bg-white';
                 }
-                
-                let dayContent = `
-                    <div class="text-sm font-medium ${isCurrentMonth ? 'text-gray-800' : 'text-gray-400'} mb-1">
-                        ${currentDate.getDate()}
-                    </div>
+
+                const dayBookings = bookings.filter(booking => 
+                    new Date(booking.date).toDateString() === date.toDateString() && 
+                    booking.status === 'confirmed'
+                );
+
+                dayElement.innerHTML = `
+                    <div class="font-semibold text-sm mb-1">${date.getDate()}</div>
+                    ${dayBookings.map(booking => `
+                        <div class="text-xs bg-cyan-100 text-cyan-800 rounded px-2 py-1 mb-1 truncate" title="${booking.roomName} - ${booking.startTime}">
+                            ${booking.roomName.substring(0, 10)}...
+                        </div>
+                    `).join('')}
                 `;
-                
-                if (hasBookings && isCurrentMonth) {
-                    // Group bookings by room for better display
-                    const bookingsByRoom = {};
-                    dayBookings.forEach(booking => {
-                        if (!bookingsByRoom[booking.roomName]) {
-                            bookingsByRoom[booking.roomName] = [];
-                        }
-                        bookingsByRoom[booking.roomName].push(booking);
-                    });
-                    
-                    let roomIndex = 0;
-                    Object.keys(bookingsByRoom).forEach(roomName => {
-                        const roomBookings = bookingsByRoom[roomName];
-                        const color = roomColors[roomIndex % roomColors.length];
-                        
-                        dayContent += `
-                            <div class="text-xs ${color} text-white rounded px-1 py-0.5 mb-1 truncate" 
-                                 title="${roomName}: ${roomBookings.length} การจอง">
-                                ${roomName.length > 8 ? roomName.substring(0, 8) + '...' : roomName} (${roomBookings.length})
-                            </div>
-                        `;
-                        roomIndex++;
-                    });
-                    
-                    if (Object.keys(bookingsByRoom).length > 3) {
-                        dayContent += `<div class="text-xs text-blue-600">+${Object.keys(bookingsByRoom).length - 3} ห้องอื่น</div>`;
-                    }
-                }
-                
-                calendarHTML += `<div class="${dayClass}">${dayContent}</div>`;
-                
-                currentDate.setDate(currentDate.getDate() + 1);
+
+                fullCalendar.appendChild(dayElement);
             }
-            
-            calendarHTML += '</div>';
-            calendarView.innerHTML = calendarHTML;
         }
-        
-        function updateRoomWiseBookings() {
-            const roomWiseContainer = document.getElementById('roomWiseBookings');
-            const roomFilter = document.getElementById('calendarRoomFilter').value;
-            let confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-            
-            const year = currentViewDate.getFullYear();
-            const month = currentViewDate.getMonth();
-            
-            // Filter bookings for current month
-            confirmedBookings = confirmedBookings.filter(booking => {
-                const bookingDate = new Date(booking.date);
-                return bookingDate.getMonth() === month && bookingDate.getFullYear() === year;
-            });
-            
-            // Apply room filter
-            if (roomFilter) {
-                confirmedBookings = confirmedBookings.filter(b => b.roomId == roomFilter);
-            }
-            
-            // Group bookings by room
-            const bookingsByRoom = {};
-            confirmedBookings.forEach(booking => {
-                if (!bookingsByRoom[booking.roomName]) {
-                    bookingsByRoom[booking.roomName] = [];
-                }
-                bookingsByRoom[booking.roomName].push(booking);
-            });
-            
-            if (Object.keys(bookingsByRoom).length === 0) {
-                roomWiseContainer.innerHTML = '<p class="text-center text-gray-500 py-8">ไม่มีการจองในเดือนนี้</p>';
-                return;
-            }
-            
-            let roomWiseHTML = '';
-            
-            Object.keys(bookingsByRoom).forEach(roomName => {
-                const roomBookings = bookingsByRoom[roomName].sort((a, b) => {
-                    if (a.date === b.date) {
-                        return a.startTime.localeCompare(b.startTime);
-                    }
-                    return a.date.localeCompare(b.date);
-                });
-                
-                roomWiseHTML += `
-                    <div class="mb-6 border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="bg-teal-500 text-white px-4 py-3">
-                            <h4 class="font-semibold text-lg">${roomName}</h4>
-                            <p class="text-sm opacity-90">${roomBookings.length} การจอง</p>
-                        </div>
-                        <div class="p-4">
-                            <div class="grid gap-3">
-                `;
-                
-                roomBookings.forEach(booking => {
-                    const bookingDate = new Date(booking.date);
-                    const dayName = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'][bookingDate.getDay()];
-                    
-                    roomWiseHTML += `
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-4">
-                                    <div class="text-sm font-medium text-gray-800">
-                                        📅 ${booking.date} (${dayName})
-                                    </div>
-                                    <div class="text-sm text-gray-600">
-                                        ⏰ ${booking.startTime} - ${booking.endTime}
-                                    </div>
-                                </div>
-                                <div class="mt-1 text-sm text-gray-600">
-                                    👤 ${booking.bookerName} | 📞 ${booking.bookerPhone}
-                                </div>
-                                <div class="mt-1 text-sm text-gray-600">
-                                    📝 ${booking.purpose}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                roomWiseHTML += `
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            roomWiseContainer.innerHTML = roomWiseHTML;
+
+        function previousCalendarMonth() {
+            calendarDate.setMonth(calendarDate.getMonth() - 1);
+            generateFullCalendar();
         }
-        
-        function changeMonth(direction) {
-            currentViewDate.setMonth(currentViewDate.getMonth() + direction);
-            updateMonthlyCalendarView();
+
+        function nextCalendarMonth() {
+            calendarDate.setMonth(calendarDate.getMonth() + 1);
+            generateFullCalendar();
         }
 
         function updateStatistics() {
-            const statisticsContent = document.getElementById('statisticsContent');
             const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-            
-            // Total bookings
             const totalBookings = confirmedBookings.length;
             
-            // Most popular room
+            // Room usage statistics
             const roomUsage = {};
-            confirmedBookings.forEach(booking => {
-                roomUsage[booking.roomName] = (roomUsage[booking.roomName] || 0) + 1;
+            rooms.forEach(room => {
+                roomUsage[room.name] = confirmedBookings.filter(b => b.roomId === room.id).length;
             });
+
+            // Time slot statistics
+            const timeSlots = {};
+            confirmedBookings.forEach(booking => {
+                const hour = parseInt(booking.startTime.split(':')[0]);
+                const timeRange = `${hour}:00-${hour + 1}:00`;
+                timeSlots[timeRange] = (timeSlots[timeRange] || 0) + 1;
+            });
+
+            // Most popular room
             const mostPopularRoom = Object.keys(roomUsage).reduce((a, b) => 
-                roomUsage[a] > roomUsage[b] ? a : b, 'ไม่มีข้อมูล');
-            
+                roomUsage[a] > roomUsage[b] ? a : b, Object.keys(roomUsage)[0] || 'ไม่มีข้อมูล'
+            );
+
             // Most popular time
-            const timeUsage = {};
-            confirmedBookings.forEach(booking => {
-                const hour = booking.startTime.split(':')[0];
-                timeUsage[hour] = (timeUsage[hour] || 0) + 1;
-            });
-            const mostPopularTime = Object.keys(timeUsage).reduce((a, b) => 
-                timeUsage[a] > timeUsage[b] ? a : b, 'ไม่มีข้อมูล');
-            
-            statisticsContent.innerHTML = `
-                <div class="bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-xl p-6 text-center">
-                    <div class="text-3xl font-bold mb-2">${totalBookings}</div>
-                    <div class="text-sm opacity-90">จำนวนการจองทั้งหมด</div>
+            const mostPopularTime = Object.keys(timeSlots).reduce((a, b) => 
+                timeSlots[a] > timeSlots[b] ? a : b, Object.keys(timeSlots)[0] || 'ไม่มีข้อมูล'
+            );
+
+            document.getElementById('statisticsContent').innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">📊 สรุปการใช้งาน</h3>
+                        <p class="text-2xl font-bold text-cyan-600">${totalBookings} ครั้ง</p>
+                        <p class="text-gray-600">จำนวนการจองทั้งหมด</p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🏆 ห้องที่ใช้บ่อยที่สุด</h3>
+                        <p class="text-xl font-bold text-green-600">${mostPopularRoom}</p>
+                        <p class="text-gray-600">${roomUsage[mostPopularRoom] || 0} ครั้ง</p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">⏰ ช่วงเวลาที่จองมากที่สุด</h3>
+                        <p class="text-xl font-bold text-orange-600">${mostPopularTime}</p>
+                        <p class="text-gray-600">${timeSlots[mostPopularTime] || 0} ครั้ง</p>
+                    </div>
                 </div>
-                <div class="bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-xl p-6 text-center">
-                    <div class="text-lg font-bold mb-2">${mostPopularRoom}</div>
-                    <div class="text-sm opacity-90">ห้องที่ใช้บ่อยที่สุด</div>
-                </div>
-                <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl p-6 text-center">
-                    <div class="text-lg font-bold mb-2">${mostPopularTime !== 'ไม่มีข้อมูล' ? mostPopularTime + ':00' : mostPopularTime}</div>
-                    <div class="text-sm opacity-90">ช่วงเวลาที่จองมากที่สุด</div>
+            `;
+
+            // Generate chart
+            const chartContent = document.getElementById('chartContent');
+            chartContent.innerHTML = `
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800">การใช้งานแต่ละห้อง</h3>
+                    ${Object.entries(roomUsage).map(([room, count]) => `
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 flex-1">${room}</span>
+                            <div class="flex-1 mx-4">
+                                <div class="bg-gray-200 rounded-full h-4">
+                                    <div class="bg-gradient-to-r from-cyan-400 to-blue-500 h-4 rounded-full" 
+                                         style="width: ${totalBookings > 0 ? (count / Math.max(...Object.values(roomUsage))) * 100 : 0}%"></div>
+                                </div>
+                            </div>
+                            <span class="text-sm font-semibold text-gray-800 w-8">${count}</span>
+                        </div>
+                    `).join('')}
                 </div>
             `;
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98423e9602404b58',t:'MTc1ODcxNjUxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'984365cc70e25805',t:'MTc1ODcyODYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
