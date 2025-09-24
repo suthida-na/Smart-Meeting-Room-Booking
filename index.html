@@ -679,7 +679,13 @@
         }
 
         function submitBooking() {
-   selectedDates.forEach(date => {
+    const name = document.getElementById('booker-name').value;
+    const phone = document.getElementById('booker-phone').value;
+    const purpose = document.getElementById('booking-purpose').value;
+    const startTime = document.getElementById('start-time').value;
+    const endTime = document.getElementById('end-time').value;
+
+    selectedDates.forEach(date => {
         const newBooking = {
             roomName: selectedRoom.name,
             date: date.toISOString().split('T')[0],
@@ -700,10 +706,10 @@
         .then(response => response.json())
         .then(result => {
             if (result.status === 'success') {
-                // ... (โค้ดเดิมที่แจ้งเตือนและอัปเดตหน้าเว็บ) ...
                 alert('ยืนยันการจองเรียบร้อยแล้ว!');
                 closeBookingModal();
-                updateRoomList();
+                // หลังจากส่งข้อมูลเสร็จ ให้เรียกฟังก์ชันอัปเดตข้อมูลจาก Google Sheet
+                updateRoomList(); 
                 updateMyBookings();
                 updateStatistics();
                 updateCalendarView();
@@ -1114,4 +1120,5 @@
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98412cb956c17dc3',t:'MTc1ODcwNTI5OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
+
 
