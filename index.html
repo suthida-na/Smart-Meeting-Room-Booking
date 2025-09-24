@@ -135,8 +135,25 @@
                         <button onclick="changeMonth(1)" class="px-3 py-1 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors">เดือนถัดไป ▶</button>
                     </div>
                 </div>
+                
+                <!-- Room Filter -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามห้อง</label>
+                    <select id="calendarRoomFilter" class="w-full md:w-64 p-3 border-2 border-teal-200 rounded-lg focus:border-teal-500 focus:outline-none" onchange="updateCalendarView()">
+                        <option value="">ทุกห้อง</option>
+                    </select>
+                </div>
+                
                 <div id="monthlyCalendarView">
                     <!-- Monthly calendar will be populated by JavaScript -->
+                </div>
+                
+                <!-- Room-wise booking list -->
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">รายการจองแยกตามห้อง</h3>
+                    <div id="roomWiseBookings">
+                        <!-- Room-wise bookings will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -648,11 +665,20 @@
 
         function populateRoomFilters() {
             const roomFilter = document.getElementById('roomFilter');
+            const calendarRoomFilter = document.getElementById('calendarRoomFilter');
+            
             rooms.forEach(room => {
+                // For my bookings filter
                 const option = document.createElement('option');
                 option.value = room.id;
                 option.textContent = room.name;
                 roomFilter.appendChild(option);
+                
+                // For calendar filter
+                const calendarOption = document.createElement('option');
+                calendarOption.value = room.id;
+                calendarOption.textContent = room.name;
+                calendarRoomFilter.appendChild(calendarOption);
             });
         }
 
@@ -738,11 +764,18 @@
 
         function updateCalendarView() {
             updateMonthlyCalendarView();
+            updateRoomWiseBookings();
         }
         
         function updateMonthlyCalendarView() {
             const calendarView = document.getElementById('monthlyCalendarView');
-            const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+            const roomFilter = document.getElementById('calendarRoomFilter').value;
+            let confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+            
+            // Apply room filter
+            if (roomFilter) {
+                confirmedBookings = confirmedBookings.filter(b => b.roomId == roomFilter);
+            }
             
             const year = currentViewDate.getFullYear();
             const month = currentViewDate.getMonth();
@@ -777,6 +810,12 @@
                 }
             });
             
+            // Room colors for visual distinction
+            const roomColors = [
+                'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500',
+                'bg-indigo-500', 'bg-pink-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500'
+            ];
+            
             let calendarHTML = `
                 <div class="grid grid-cols-7 gap-1 mb-2">
             `;
@@ -796,12 +835,12 @@
                 const dayBookings = bookingsByDate[dateStr] || [];
                 const hasBookings = dayBookings.length > 0;
                 
-                let dayClass = 'min-h-[80px] p-1 border border-gray-200 rounded ';
+                let dayClass = 'min-h-[100px] p-1 border border-gray-200 rounded ';
                 
                 if (!isCurrentMonth) {
                     dayClass += 'bg-gray-50 text-gray-300 ';
                 } else if (hasBookings) {
-                    dayClass += 'bg-teal-50 ';
+                    dayClass += 'bg-blue-50 ';
                 } else {
                     dayClass += 'bg-white ';
                 }
@@ -813,14 +852,31 @@
                 `;
                 
                 if (hasBookings && isCurrentMonth) {
-                    dayContent += dayBookings.slice(0, 2).map(booking => `
-                        <div class="text-xs bg-teal-500 text-white rounded px-1 py-0.5 mb-1 truncate" title="${booking.roomName} - ${booking.bookerName} (${booking.startTime}-${booking.endTime})">
-                            ${booking.roomName.length > 10 ? booking.roomName.substring(0, 10) + '...' : booking.roomName}
-                        </div>
-                    `).join('');
+                    // Group bookings by room for better display
+                    const bookingsByRoom = {};
+                    dayBookings.forEach(booking => {
+                        if (!bookingsByRoom[booking.roomName]) {
+                            bookingsByRoom[booking.roomName] = [];
+                        }
+                        bookingsByRoom[booking.roomName].push(booking);
+                    });
                     
-                    if (dayBookings.length > 2) {
-                        dayContent += `<div class="text-xs text-teal-600">+${dayBookings.length - 2} อื่นๆ</div>`;
+                    let roomIndex = 0;
+                    Object.keys(bookingsByRoom).forEach(roomName => {
+                        const roomBookings = bookingsByRoom[roomName];
+                        const color = roomColors[roomIndex % roomColors.length];
+                        
+                        dayContent += `
+                            <div class="text-xs ${color} text-white rounded px-1 py-0.5 mb-1 truncate" 
+                                 title="${roomName}: ${roomBookings.length} การจอง">
+                                ${roomName.length > 8 ? roomName.substring(0, 8) + '...' : roomName} (${roomBookings.length})
+                            </div>
+                        `;
+                        roomIndex++;
+                    });
+                    
+                    if (Object.keys(bookingsByRoom).length > 3) {
+                        dayContent += `<div class="text-xs text-blue-600">+${Object.keys(bookingsByRoom).length - 3} ห้องอื่น</div>`;
                     }
                 }
                 
@@ -831,6 +887,95 @@
             
             calendarHTML += '</div>';
             calendarView.innerHTML = calendarHTML;
+        }
+        
+        function updateRoomWiseBookings() {
+            const roomWiseContainer = document.getElementById('roomWiseBookings');
+            const roomFilter = document.getElementById('calendarRoomFilter').value;
+            let confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+            
+            const year = currentViewDate.getFullYear();
+            const month = currentViewDate.getMonth();
+            
+            // Filter bookings for current month
+            confirmedBookings = confirmedBookings.filter(booking => {
+                const bookingDate = new Date(booking.date);
+                return bookingDate.getMonth() === month && bookingDate.getFullYear() === year;
+            });
+            
+            // Apply room filter
+            if (roomFilter) {
+                confirmedBookings = confirmedBookings.filter(b => b.roomId == roomFilter);
+            }
+            
+            // Group bookings by room
+            const bookingsByRoom = {};
+            confirmedBookings.forEach(booking => {
+                if (!bookingsByRoom[booking.roomName]) {
+                    bookingsByRoom[booking.roomName] = [];
+                }
+                bookingsByRoom[booking.roomName].push(booking);
+            });
+            
+            if (Object.keys(bookingsByRoom).length === 0) {
+                roomWiseContainer.innerHTML = '<p class="text-center text-gray-500 py-8">ไม่มีการจองในเดือนนี้</p>';
+                return;
+            }
+            
+            let roomWiseHTML = '';
+            
+            Object.keys(bookingsByRoom).forEach(roomName => {
+                const roomBookings = bookingsByRoom[roomName].sort((a, b) => {
+                    if (a.date === b.date) {
+                        return a.startTime.localeCompare(b.startTime);
+                    }
+                    return a.date.localeCompare(b.date);
+                });
+                
+                roomWiseHTML += `
+                    <div class="mb-6 border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-teal-500 text-white px-4 py-3">
+                            <h4 class="font-semibold text-lg">${roomName}</h4>
+                            <p class="text-sm opacity-90">${roomBookings.length} การจอง</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="grid gap-3">
+                `;
+                
+                roomBookings.forEach(booking => {
+                    const bookingDate = new Date(booking.date);
+                    const dayName = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'][bookingDate.getDay()];
+                    
+                    roomWiseHTML += `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-sm font-medium text-gray-800">
+                                        📅 ${booking.date} (${dayName})
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        ⏰ ${booking.startTime} - ${booking.endTime}
+                                    </div>
+                                </div>
+                                <div class="mt-1 text-sm text-gray-600">
+                                    👤 ${booking.bookerName} | 📞 ${booking.bookerPhone}
+                                </div>
+                                <div class="mt-1 text-sm text-gray-600">
+                                    📝 ${booking.purpose}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                roomWiseHTML += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            roomWiseContainer.innerHTML = roomWiseHTML;
         }
         
         function changeMonth(direction) {
@@ -878,5 +1023,5 @@
             `;
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98422583e3fe4b82',t:'MTc1ODcxNTQ5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98423e9602404b58',t:'MTc1ODcxNjUxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
