@@ -39,7 +39,6 @@
                 <nav class="flex space-x-4">
                     <button onclick="showPage('home')" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-300 bg-cyan-500 text-white">หน้าหลัก</button>
                     <button onclick="showPage('mybookings')" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-300 text-gray-600 hover:bg-cyan-50">รายการจองของฉัน</button>
-                    <button onclick="showPage('deletebookings')" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-300 text-gray-600 hover:bg-red-50 text-red-600 border border-red-200">ลบการจอง</button>
                     <button onclick="showPage('statistics')" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-300 text-gray-600 hover:bg-cyan-50">สถิติการใช้งาน</button>
                 </nav>
             </div>
@@ -195,64 +194,7 @@
             </div>
         </div>
 
-        <!-- Delete Bookings Page -->
-        <div id="deletebookings-page" class="page hidden">
-            <div class="bg-white rounded-2xl p-6 card-shadow">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                    ลบการจอง
-                </h2>
-                
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div class="flex items-start">
-                        <svg class="w-5 h-5 text-red-500 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                        <div>
-                            <h3 class="text-red-800 font-semibold">คำเตือน</h3>
-                            <p class="text-red-700 text-sm mt-1">การลบการจองจะไม่สามารถกู้คืนได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนดำเนินการ</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Password Input -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">รหัสผ่านสำหรับลบการจอง</label>
-                    <input type="password" id="delete-password" placeholder="กรุณาใส่รหัสผ่าน" class="w-full max-w-md p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                    <button onclick="verifyPasswordAndShowBookings()" class="ml-3 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                        ยืนยันรหัสผ่าน
-                    </button>
-                </div>
-                
-                <!-- Bookings List (hidden initially) -->
-                <div id="delete-bookings-section" class="hidden">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">เลือกการจองที่ต้องการลบ</h3>
-                    
-                    <!-- Filters -->
-                    <div class="mb-6 grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามห้อง</label>
-                            <select id="delete-filter-room" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                                <option value="">ทุกห้อง</option>
-                                <option value="ห้องUSR(1-101)">ห้องUSR(1-101)</option>
-                                <option value="ห้องสัมมนา (อาคาร 3 ชั้น 1)">ห้องสัมมนา (อาคาร 3 ชั้น 1)</option>
-                                <option value="ห้องประชุมพุคยาภรณ์ 1 (อาคาร 3 ชั้น 1)">ห้องประชุมพุคยาภรณ์ 1 (อาคาร 3 ชั้น 1)</option>
-                                <option value="ห้องประชุมพุคยาภรณ์ 2 (3-206)">ห้องประชุมพุคยาภรณ์ 2 (3-206)</option>
-                                <option value="ห้องประชุมผู้บริหาร 3-202">ห้องประชุมผู้บริหาร 3-202</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามวันที่</label>
-                            <input type="date" id="delete-filter-date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                        </div>
-                    </div>
-                    
-                    <div id="delete-bookings-list"></div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Statistics Page -->
         <div id="statistics-page" class="page hidden">
@@ -386,8 +328,7 @@
             document.getElementById('end-time').addEventListener('change', updateRoomList);
             document.getElementById('filter-room').addEventListener('change', updateMyBookings);
             document.getElementById('filter-date').addEventListener('change', updateMyBookings);
-            document.getElementById('delete-filter-room').addEventListener('change', updateDeleteBookings);
-            document.getElementById('delete-filter-date').addEventListener('change', updateDeleteBookings);
+
             
             // Booking form
             document.getElementById('booking-form').addEventListener('submit', function(e) {
@@ -782,7 +723,12 @@
         }
 
         function cancelBooking(bookingId) {
-            // Ask for password first
+            // First confirmation with contact information
+            if (!confirm('หากต้องการยกเลิกโปรดติดต่องานวิชาการ\n\nคุณต้องการดำเนินการยกเลิกการจองต่อหรือไม่?')) {
+                return;
+            }
+            
+            // Ask for password
             const password = prompt('กรุณาใส่รหัสผ่านเพื่อยกเลิกการจอง:');
             
             if (password === null) {
@@ -795,8 +741,8 @@
                 return;
             }
             
-            // Password is correct, proceed with confirmation
-            if (confirm('คุณต้องการยกเลิกการจองนี้หรือไม่?')) {
+            // Password is correct, proceed with final confirmation
+            if (confirm('ยืนยันการยกเลิกการจองนี้หรือไม่?')) {
                 const bookingIndex = bookings.findIndex(booking => booking.id == bookingId);
                 if (bookingIndex !== -1) {
                     bookings[bookingIndex].status = 'cancelled';
@@ -879,110 +825,7 @@
             document.getElementById('time-usage-stats').innerHTML = timeStatsHTML;
         }
 
-        // Delete bookings functions
-        function verifyPasswordAndShowBookings() {
-            const password = document.getElementById('delete-password').value;
-            
-            if (password !== '1234') {
-                alert('รหัสผ่านไม่ถูกต้อง!');
-                document.getElementById('delete-password').value = '';
-                return;
-            }
-            
-            document.getElementById('delete-bookings-section').classList.remove('hidden');
-            updateDeleteBookings();
-        }
 
-        function updateDeleteBookings() {
-            const filterRoom = document.getElementById('delete-filter-room').value;
-            const filterDate = document.getElementById('delete-filter-date').value;
-            
-            let filteredBookings = bookings.filter(booking => booking.status === 'active');
-            
-            if (filterRoom) {
-                filteredBookings = filteredBookings.filter(booking => booking.roomName === filterRoom);
-            }
-            
-            if (filterDate) {
-                const selectedFilterDate = new Date(filterDate).toDateString();
-                filteredBookings = filteredBookings.filter(booking => booking.date === selectedFilterDate);
-            }
-            
-            const bookingsList = document.getElementById('delete-bookings-list');
-            
-            if (filteredBookings.length === 0) {
-                bookingsList.innerHTML = `
-                    <div class="text-center py-12">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <p class="text-gray-500">ไม่มีรายการจอง</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let bookingsHTML = '';
-            filteredBookings.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(booking => {
-                const bookingDate = new Date(booking.date);
-                const dateStr = bookingDate.toLocaleDateString('th-TH', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                
-                bookingsHTML += `
-                    <div class="border border-red-200 rounded-xl p-6 mb-4 bg-red-50">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center mb-2">
-                                    <h3 class="text-lg font-semibold text-gray-800 mr-3">${booking.roomName}</h3>
-                                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">พร้อมลบ</span>
-                                </div>
-                                <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-                                    <div>
-                                        <div class="mb-1"><strong>ผู้จอง:</strong> ${booking.bookerName}</div>
-                                        <div class="mb-1"><strong>เบอร์โทร:</strong> ${booking.bookerPhone}</div>
-                                    </div>
-                                    <div>
-                                        <div class="mb-1"><strong>วันที่:</strong> ${dateStr}</div>
-                                        <div class="mb-1"><strong>เวลา:</strong> ${booking.startTime} - ${booking.endTime} น.</div>
-                                    </div>
-                                </div>
-                                <div class="mt-3">
-                                    <strong class="text-sm text-gray-700">วัตถุประสงค์:</strong>
-                                    <p class="text-sm text-gray-600 mt-1">${booking.purpose}</p>
-                                </div>
-                            </div>
-                            <button onclick="deleteBookingPermanently(${booking.id})" class="ml-4 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                                ลบถาวร
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            bookingsList.innerHTML = bookingsHTML;
-        }
-
-        function deleteBookingPermanently(bookingId) {
-            if (confirm('คุณแน่ใจหรือไม่ที่จะลบการจองนี้ถาวร? การดำเนินการนี้ไม่สามารถกู้คืนได้!')) {
-                const bookingIndex = bookings.findIndex(booking => booking.id == bookingId);
-                if (bookingIndex !== -1) {
-                    bookings.splice(bookingIndex, 1); // Remove completely from array
-                    localStorage.setItem('meetingRoomBookings', JSON.stringify(bookings));
-                    updateDeleteBookings();
-                    updateMyBookings();
-                    updateRoomList();
-                    updateStatistics();
-                    alert('ลบการจองเรียบร้อยแล้ว');
-                }
-            }
-        }
 
         // Navigation
         function showPage(pageId) {
@@ -1008,14 +851,8 @@
                 updateMyBookings();
             } else if (pageId === 'statistics') {
                 updateStatistics();
-            } else if (pageId === 'deletebookings') {
-                // Reset delete bookings page
-                document.getElementById('delete-password').value = '';
-                document.getElementById('delete-bookings-section').classList.add('hidden');
-                document.getElementById('delete-filter-room').value = '';
-                document.getElementById('delete-filter-date').value = '';
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9840e84e156b7992',t:'MTc1ODcwMjQ5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98410bd9c13c798f',t:'MTc1ODcwMzk1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
