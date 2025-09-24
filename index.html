@@ -373,7 +373,7 @@
         let calendarViewYear = new Date().getFullYear();
         let selectedRoom = null;
         let bookings = JSON.parse(localStorage.getItem('meetingRoomBookings')) || [];
-        
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlIAs_xrgVYzWXdTucagMT22tzpd2y1Xwx25o_RK8193ENoZIuApxmth6GmTdI_Cfi/exec';
         const rooms = [
             { id: 1, name: 'ห้องUSR(1-101)', capacity: 70 },
             { id: 2, name: 'ห้องสัมมนา (อาคาร 3 ชั้น 1)', capacity: 80 },
@@ -679,12 +679,41 @@
         }
 
         function submitBooking() {
-            const name = document.getElementById('booker-name').value;
-            const phone = document.getElementById('booker-phone').value;
-            const purpose = document.getElementById('booking-purpose').value;
-            const startTime = document.getElementById('start-time').value;
-            const endTime = document.getElementById('end-time').value;
-            
+   selectedDates.forEach(date => {
+        const newBooking = {
+            roomName: selectedRoom.name,
+            date: date.toISOString().split('T')[0],
+            startTime: startTime,
+            endTime: endTime,
+            bookerName: name,
+            bookerPhone: phone,
+            purpose: purpose,
+        };
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(newBooking),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                // ... (โค้ดเดิมที่แจ้งเตือนและอัปเดตหน้าเว็บ) ...
+                alert('ยืนยันการจองเรียบร้อยแล้ว!');
+                closeBookingModal();
+                updateRoomList();
+                updateMyBookings();
+                updateStatistics();
+                updateCalendarView();
+            } else {
+                alert('เกิดข้อผิดพลาดในการจอง: ' + result.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+}
             // Create bookings for all selected dates
             selectedDates.forEach(date => {
                 const booking = {
@@ -1085,3 +1114,4 @@
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98412cb956c17dc3',t:'MTc1ODcwNTI5OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
+
