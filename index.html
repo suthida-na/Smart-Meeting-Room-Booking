@@ -341,642 +341,417 @@
     </div>
 
     <script>
-        // Global variables
-        let currentDate = new Date();
-        let selectedDates = [];
-        let selectedStartTime = '';
-        let selectedEndTime = '';
-        let selectedRoomForBooking = '';
-        let bookings = JSON.parse(localStorage.getItem('meetingRoomBookings')) || [];
-        let currentBookingToCancel = null;
-        let calendarCurrentDate = new Date();
-
-        // Room data
-        const rooms = [
-            { id: 'usr', name: 'ห้องUSR(1-101)', capacity: 70, location: 'อาคาร 1 ชั้น 1' },
-            { id: 'seminar', name: 'ห้องสัมมนา', capacity: 80, location: 'อาคาร 3 ชั้น 1' },
-            { id: 'pukya1', name: 'ห้องประชุมพุคยาภรณ์ 1', capacity: 360, location: 'อาคาร 3 ชั้น 1' },
-            { id: 'pukya2', name: 'ห้องประชุมพุคยาภรณ์ 2 (3-206)', capacity: 120, location: 'อาคาร 3 ชั้น 2' },
-            { id: 'executive', name: 'ห้องประชุมผู้บริหาร 3-202', capacity: 40, location: 'อาคาร 3 ชั้น 2' }
-        ];
-
-        // Initialize the application
-        function init() {
-            generateTimeOptions();
-            generateCalendar();
-            updateRoomList();
-            updateMyBookings();
-            updateStatistics();
-            populateRoomFilters();
-            updateCalendarView();
-            
-            // Set default time
-            document.getElementById('startTime').value = '09:00';
-            document.getElementById('endTime').value = '10:00';
-        }
-
-        // Generate time options
-        function generateTimeOptions() {
-            const startSelect = document.getElementById('startTime');
-            const endSelect = document.getElementById('endTime');
-            
-            startSelect.innerHTML = '';
-            endSelect.innerHTML = '';
-            
-            // Generate start time options (9:00 - 20:00)
-            for (let hour = 9; hour <= 20; hour++) {
-                for (let minute of [0, 30, 40]) {
-                    if (hour === 20 && minute > 0) continue;
-                    
-                    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    startSelect.innerHTML += `<option value="${timeString}">${timeString}</option>`;
-                }
-            }
-            
-            // Generate end time options (9:00 - 20:30)
-            for (let hour = 9; hour <= 20; hour++) {
-                for (let minute of [0, 30, 40]) {
-                    if (hour === 20 && minute > 30) continue;
-                    
-                    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    endSelect.innerHTML += `<option value="${timeString}">${timeString}</option>`;
-                }
-            }
-        }
-
-        // Generate calendar
-        function generateCalendar() {
-            const monthNames = [
-                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-            ];
-            
-            document.getElementById('currentMonth').textContent = 
-                `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear() + 543}`;
-            
-            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
-            
-            const calendarDays = document.getElementById('calendarDays');
-            calendarDays.innerHTML = '';
-            
-            const today = new Date();
-            
-            for (let i = 0; i < 42; i++) {
-                const date = new Date(startDate);
-                date.setDate(startDate.getDate() + i);
-                
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day text-center p-2 rounded-lg cursor-pointer';
-                dayElement.textContent = date.getDate();
-                
-                if (date.getMonth() !== currentDate.getMonth()) {
-                    dayElement.className += ' text-gray-400';
-                } else if (date < today.setHours(0,0,0,0)) {
-                    dayElement.className += ' text-gray-400 cursor-not-allowed';
-                } else {
-                    dayElement.onclick = () => toggleDateSelection(date);
-                    
-                    if (selectedDates.some(d => d.toDateString() === date.toDateString())) {
-                        dayElement.className += ' selected';
-                    }
-                    
-                    if (date.toDateString() === today.toDateString()) {
-                        dayElement.className += ' bg-yellow-100 border border-yellow-300';
-                    }
-                }
-                
-                calendarDays.appendChild(dayElement);
-            }
-        }
-
-        // Toggle date selection
-        function toggleDateSelection(date) {
-            const today = new Date();
-            if (date < today.setHours(0,0,0,0)) return;
-            
-            const existingIndex = selectedDates.findIndex(d => d.toDateString() === date.toDateString());
-            
-            if (existingIndex > -1) {
-                selectedDates.splice(existingIndex, 1);
-            } else {
-                selectedDates.push(new Date(date));
-            }
-            
-            generateCalendar();
-            updateRoomList();
-        }
-
-        // Change month
-        function changeMonth(direction) {
-            currentDate.setMonth(currentDate.getMonth() + direction);
-            generateCalendar();
-        }
-
-        // Update room list
-        function updateRoomList() {
-            const roomList = document.getElementById('roomList');
-            const startTime = document.getElementById('startTime').value;
-            const endTime = document.getElementById('endTime').value;
-            
-            roomList.innerHTML = '';
-            
-            rooms.forEach(room => {
-                const roomCard = document.createElement('div');
-                roomCard.className = 'room-card p-4 rounded-lg cursor-pointer';
-                
-                let isAvailable = true;
-                
-                // Check availability for selected dates and time
-                if (selectedDates.length > 0 && startTime && endTime) {
-                    for (const date of selectedDates) {
-                        const dateStr = date.toISOString().split('T')[0];
-                        const conflict = bookings.some(booking => 
-                            booking.roomId === room.id && 
-                            booking.date === dateStr &&
-                            booking.status === 'confirmed' &&
-                            timeOverlap(startTime, endTime, booking.startTime, booking.endTime)
-                        );
-                        
-                        if (conflict) {
-                            isAvailable = false;
-                            break;
-                        }
-                    }
-                }
-                
-                roomCard.className += isAvailable ? ' room-available' : ' room-booked';
-                
-                roomCard.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <h4 class="font-semibold text-lg text-gray-800">${room.name}</h4>
-                        <span class="text-sm ${isAvailable ? 'text-green-600' : 'text-red-600'}">
-                            ${isAvailable ? '✅ ว่าง' : '❌ จองแล้ว'}
-                        </span>
-                    </div>
-                    <p class="text-gray-600 text-sm mb-2">📍 ${room.location}</p>
-                    <p class="text-gray-600 text-sm mb-3">👥 จุได้ ${room.capacity} คน</p>
-                    ${isAvailable ? '<p class="text-cyan-600 text-sm font-medium">คลิกเพื่อจอง</p>' : ''}
-                `;
-                
-                if (isAvailable && selectedDates.length > 0 && startTime && endTime) {
-                    roomCard.onclick = () => openBookingModal(room);
-                }
-                
-                roomList.appendChild(roomCard);
-            });
-        }
-
-        // Check time overlap
-        function timeOverlap(start1, end1, start2, end2) {
-            return start1 < end2 && end1 > start2;
-        }
-
-        // Open booking modal
-        function openBookingModal(room) {
-            selectedRoomForBooking = room;
-            
-            document.getElementById('selectedRoom').value = room.name;
-            document.getElementById('selectedDate').value = selectedDates.map(d => 
-                d.toLocaleDateString('th-TH')).join(', ');
-            document.getElementById('selectedTime').value = 
-                `${document.getElementById('startTime').value} - ${document.getElementById('endTime').value}`;
-            
-            document.getElementById('bookingModal').classList.remove('hidden');
-            document.getElementById('bookingModal').classList.add('flex');
-        }
-
-        // Close booking modal
-        function closeBookingModal() {
-            document.getElementById('bookingModal').classList.add('hidden');
-            document.getElementById('bookingModal').classList.remove('flex');
-            document.getElementById('bookingForm').reset();
-        }
-
-        // Submit booking
-        function submitBooking(event) {
-            event.preventDefault();
-            
-            const department = document.getElementById('department').value;
-            const purpose = document.getElementById('purpose').value;
-            const startTime = document.getElementById('startTime').value;
-            const endTime = document.getElementById('endTime').value;
-            
-            // Create bookings for all selected dates
-            selectedDates.forEach(date => {
-                const booking = {
-                    id: Date.now() + Math.random(),
-                    roomId: selectedRoomForBooking.id,
-                    roomName: selectedRoomForBooking.name,
-                    date: date.toISOString().split('T')[0],
-                    startTime: startTime,
-                    endTime: endTime,
-                    department: department,
-                    purpose: purpose,
-                    status: 'confirmed',
-                    createdAt: new Date().toISOString()
-                };
-                
-                bookings.push(booking);
-            });
-            
-            // Save to localStorage
-            localStorage.setItem('meetingRoomBookings', JSON.stringify(bookings));
-            
-            // Save to Google Sheets (simulated)
-            saveToGoogleSheets();
-            
-            closeBookingModal();
-            updateRoomList();
-            updateMyBookings();
-            updateStatistics();
-            
-            alert('✅ จองห้องประชุมเรียบร้อยแล้ว!');
-        }
-
-        // Simulate saving to Google Sheets
-        function saveToGoogleSheets() {
-            // In a real implementation, this would make an API call to Google Sheets
-            console.log('Saving to Google Sheets:', bookings[bookings.length - 1]);
-        }
-
-        // Show page
-        function showPage(pageId) {
-            // Hide all pages
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.add('hidden');
-            });
-            
-            // Show selected page
-            document.getElementById(pageId + 'Page').classList.remove('hidden');
-            
-            // Update navigation
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = 'nav-btn px-6 py-2 rounded-lg font-medium transition-all duration-200 text-cyan-600 hover:bg-cyan-50';
-            });
-            
-            event.target.className = 'nav-btn px-6 py-2 rounded-lg font-medium transition-all duration-200 bg-cyan-500 text-white';
-            
-            // Update page-specific content
-            if (pageId === 'myBookings') {
-                updateMyBookings();
-            } else if (pageId === 'statistics') {
-                updateStatistics();
-            } else if (pageId === 'allBookings') {
-                updateCalendarView();
-            }
-        }
-
-        // Update my bookings
-        function updateMyBookings() {
-            const myBookingsList = document.getElementById('myBookingsList');
-            const userBookings = bookings.filter(booking => booking.status === 'confirmed');
-            
-            if (userBookings.length === 0) {
-                myBookingsList.innerHTML = '<p class="text-gray-500 text-center py-8">ยังไม่มีรายการจอง</p>';
-                return;
-            }
-            
-            myBookingsList.innerHTML = userBookings.map(booking => `
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-lg text-gray-800">${booking.roomName}</h4>
-                            <p class="text-gray-600 mt-1">📅 ${new Date(booking.date).toLocaleDateString('th-TH')}</p>
-                            <p class="text-gray-600">⏰ ${booking.startTime} - ${booking.endTime}</p>
-                            <p class="text-gray-600">🏢 ${booking.department}</p>
-                            <p class="text-gray-600 mt-2">${booking.purpose}</p>
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                                ✅ ยืนยันแล้ว
-                            </span>
-                            <button onclick="openCancelModal('${booking.id}')" 
-                                    class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 transition-colors">
-                                ❌ ยกเลิก
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Populate room filters
-        function populateRoomFilters() {
-            const roomFilter = document.getElementById('roomFilter');
-            const calendarRoomFilter = document.getElementById('calendarRoomFilter');
-            
-            rooms.forEach(room => {
-                const option = `<option value="${room.id}">${room.name}</option>`;
-                roomFilter.innerHTML += option;
-                calendarRoomFilter.innerHTML += option;
-            });
-        }
-
-        // Apply filters
-        function applyFilters() {
-            const roomFilter = document.getElementById('roomFilter').value;
-            const dateFilter = document.getElementById('dateFilter').value;
-            
-            let filteredBookings = bookings.filter(booking => booking.status === 'confirmed');
-            
-            if (roomFilter) {
-                filteredBookings = filteredBookings.filter(booking => booking.roomId === roomFilter);
-            }
-            
-            if (dateFilter) {
-                filteredBookings = filteredBookings.filter(booking => booking.date === dateFilter);
-            }
-            
-            const myBookingsList = document.getElementById('myBookingsList');
-            
-            if (filteredBookings.length === 0) {
-                myBookingsList.innerHTML = '<p class="text-gray-500 text-center py-8">ไม่พบรายการจองที่ตรงกับเงื่อนไข</p>';
-                return;
-            }
-            
-            myBookingsList.innerHTML = filteredBookings.map(booking => `
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-lg text-gray-800">${booking.roomName}</h4>
-                            <p class="text-gray-600 mt-1">📅 ${new Date(booking.date).toLocaleDateString('th-TH')}</p>
-                            <p class="text-gray-600">⏰ ${booking.startTime} - ${booking.endTime}</p>
-                            <p class="text-gray-600">🏢 ${booking.department}</p>
-                            <p class="text-gray-600 mt-2">${booking.purpose}</p>
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                                ✅ ยืนยันแล้ว
-                            </span>
-                            <button onclick="openCancelModal('${booking.id}')" 
-                                    class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 transition-colors">
-                                ❌ ยกเลิก
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Open cancel modal
-        function openCancelModal(bookingId) {
-            currentBookingToCancel = bookingId;
-            document.getElementById('cancelModal').classList.remove('hidden');
-            document.getElementById('cancelModal').classList.add('flex');
-        }
-
-        // Close cancel modal
-        function closeCancelModal() {
-            document.getElementById('cancelModal').classList.add('hidden');
-            document.getElementById('cancelModal').classList.remove('flex');
-            document.getElementById('cancelCode').value = '';
-            document.getElementById('cancelError').classList.add('hidden');
-            currentBookingToCancel = null;
-        }
-
-        // Confirm cancel
-        function confirmCancel() {
-            const cancelCode = document.getElementById('cancelCode').value;
-            const errorElement = document.getElementById('cancelError');
-            
-            if (cancelCode !== '1234') {
-                errorElement.classList.remove('hidden');
-                return;
-            }
-            
-            errorElement.classList.add('hidden');
-            
-            if (currentBookingToCancel) {
-                const bookingIndex = bookings.findIndex(b => b.id == currentBookingToCancel);
-                if (bookingIndex > -1) {
-                    bookings[bookingIndex].status = 'cancelled';
-                    localStorage.setItem('meetingRoomBookings', JSON.stringify(bookings));
-                    
-                    updateMyBookings();
-                    updateRoomList();
-                    updateStatistics();
-                    
-                    alert('✅ ยกเลิกการจองเรียบร้อยแล้ว');
-                }
-            }
-            closeCancelModal();
-        }
-
-        // Update statistics
-        function updateStatistics() {
-            const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-            
-            // Total bookings
-            document.getElementById('totalBookings').textContent = confirmedBookings.length;
-            
-            // Most used room
-            const roomUsage = {};
-            confirmedBookings.forEach(booking => {
-                roomUsage[booking.roomId] = (roomUsage[booking.roomId] || 0) + 1;
-            });
-            
-            let mostUsedRoom = '';
-            let maxUsage = 0;
-            Object.entries(roomUsage).forEach(([roomId, count]) => {
-                if (count > maxUsage) {
-                    maxUsage = count;
-                    mostUsedRoom = rooms.find(r => r.id === roomId)?.name || roomId;
-                }
-            });
-            
-            document.getElementById('mostUsedRoom').textContent = mostUsedRoom || '-';
-            document.getElementById('mostUsedRoomCount').textContent = `${maxUsage} ครั้ง`;
-            
-            // Peak time
-            const timeUsage = {};
-            confirmedBookings.forEach(booking => {
-                const timeSlot = booking.startTime;
-                timeUsage[timeSlot] = (timeUsage[timeSlot] || 0) + 1;
-            });
-            
-            let peakTime = '';
-            let maxTimeUsage = 0;
-            Object.entries(timeUsage).forEach(([time, count]) => {
-                if (count > maxTimeUsage) {
-                    maxTimeUsage = count;
-                    peakTime = time;
-                }
-            });
-            
-            document.getElementById('peakTime').textContent = peakTime || '-';
-            document.getElementById('peakTimeCount').textContent = `${maxTimeUsage} ครั้ง`;
-            
-            // Room statistics
-            const roomStats = document.getElementById('roomStats');
-            roomStats.innerHTML = rooms.map(room => {
-                const usage = roomUsage[room.id] || 0;
-                const percentage = confirmedBookings.length > 0 ? (usage / confirmedBookings.length * 100).toFixed(1) : 0;
-                
-                return `
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="font-medium">${room.name}</span>
-                        <div class="flex items-center space-x-3">
-                            <span class="text-sm text-gray-600">${usage} ครั้ง (${percentage}%)</span>
-                            <div class="w-20 bg-gray-200 rounded-full h-2">
-                                <div class="bg-cyan-500 h-2 rounded-full" style="width: ${percentage}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Calendar view functions
-        function updateCalendarView() {
-            const monthNames = [
-                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-            ];
-            
-            document.getElementById('calendarCurrentMonth').textContent = 
-                `${monthNames[calendarCurrentDate.getMonth()]} ${calendarCurrentDate.getFullYear() + 543}`;
-            
-            const firstDay = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth(), 1);
-            const lastDay = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth() + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
-            
-            const calendarGrid = document.getElementById('calendarGrid');
-            calendarGrid.innerHTML = '';
-            
-            const selectedRoomFilter = document.getElementById('calendarRoomFilter').value;
-            
-            for (let i = 0; i < 42; i++) {
-                const date = new Date(startDate);
-                date.setDate(startDate.getDate() + i);
-                
-                const dayElement = document.createElement('div');
-                dayElement.className = 'min-h-32 p-2 border border-gray-200 rounded-lg';
-                
-                if (date.getMonth() !== calendarCurrentDate.getMonth()) {
-                    dayElement.className += ' bg-gray-50';
-                }
-                
-                const dateStr = date.toISOString().split('T')[0];
-                const dayBookings = bookings.filter(booking => 
-                    booking.date === dateStr && 
-                    booking.status === 'confirmed' &&
-                    (!selectedRoomFilter || booking.roomId === selectedRoomFilter)
-                );
-                
-                dayElement.innerHTML = `
-                    <div class="font-semibold text-sm mb-1 ${date.getMonth() !== calendarCurrentDate.getMonth() ? 'text-gray-400' : ''}">${date.getDate()}</div>
-                    ${dayBookings.map(booking => `
-                        <div class="text-xs bg-cyan-100 text-cyan-800 p-1 rounded mb-1" title="ห้อง: ${booking.roomName}\nเวลา: ${booking.startTime}-${booking.endTime}\nวัตถุประสงค์: ${booking.purpose}">
-                            <div class="font-medium truncate">${booking.startTime}-${booking.endTime}</div>
-                            <div class="truncate">${booking.roomName}</div>
-                            <div class="truncate text-cyan-600">${booking.purpose}</div>
-                        </div>
-                    `).join('')}
-                `;
-                
-                calendarGrid.appendChild(dayElement);
-            }
-        }
-
-        function changeCalendarMonth(direction) {
-            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
-            updateCalendarView();
-        }
-
-        // Event listeners
-        document.getElementById('startTime').addEventListener('change', updateRoomList);
-        document.getElementById('endTime').addEventListener('change', updateRoomList);
-
-        // Initialize the application when the page loads
-        init();
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98439cdc056945b2',t:'MTc1ODczMDg2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-<script>
-// ★★ ใส่ URL Web App ที่ได้จาก Deploy Apps Script ★★
+/* ==================== CONFIG ==================== */
+/* ★★ แทนที่ด้วย URL จาก Deploy Web App ของ Apps Script ★★ */
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyC19_Cd2dhCztJKxDCCPzreMuwQwlHs0i2anQlBotZF0qOXSc8COeU-WmxF2pHyTyq/exec";
 
-/* ======== ฟังก์ชันเรียก Apps Script ======== */
-// ดึงรายชื่อห้อง (ถ้าอยากโหลดจาก GAS)
-async function gsRooms() {
-  const r = await fetch(WEB_APP_URL + "?action=rooms");
-  const j = await r.json();
-  return j.rooms || [];
-}
-
-// ดึงรายการจองตามวัน (รองรับส่งหลายวันด้วย)
+/* ============== Apps Script bridge (fetch) ============== */
 async function gsList({ dates = [], roomId = "" } = {}) {
   const p = new URLSearchParams({ action: "list" });
   if (dates.length === 1) p.append("date", dates[0]);
   if (dates.length > 1) p.append("dates", dates.join(","));
   if (roomId) p.append("roomId", roomId);
   const r = await fetch(`${WEB_APP_URL}?${p.toString()}`);
-  const j = await r.json();
-  return j.bookings || [];
+  const j = await r.json(); return j.bookings || [];
 }
-
-// สร้างการจอง (ใช้ text/plain เพื่อเลี่ยง preflight/CORS)
 async function gsCreate(booking) {
   const r = await fetch(WEB_APP_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action: "create", booking })
   });
-  const j = await r.json();
-  if (!j.ok) throw new Error(j.error || "สร้างไม่สำเร็จ");
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || "สร้างไม่สำเร็จ");
   return j.booking;
 }
-
-// ยกเลิกการจอง (ต้องมี code = 1234)
 async function gsCancel(id, code = "1234") {
   const r = await fetch(WEB_APP_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action: "cancel", id, code })
   });
-  const j = await r.json();
-  if (!j.ok) throw new Error(j.error || "ยกเลิกไม่สำเร็จ");
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || "ยกเลิกไม่สำเร็จ");
   return j;
 }
 
-/* ======== ตัวช่วยฝั่งหน้าเว็บ ======== */
-// userId แบบง่าย เก็บใน localStorage
-const USER_ID = (() => {
-  const k = "smart-meeting-user";
-  let v = localStorage.getItem(k);
-  if (!v) { v = "U-" + Math.random().toString(36).slice(2,8); localStorage.setItem(k, v); }
-  return v;
-})();
+/* ==================== App State ==================== */
+let currentDate = new Date();
+let selectedDates = [];
+let selectedRoomForBooking = null;
+let bookings = [];               // cache จากชีตของวันที่ที่เลือก
+let currentBookingToCancel = null;
+let calendarCurrentDate = new Date();
+const USER_ID = (()=>{ const k="smart-meeting-user"; let v=localStorage.getItem(k);
+  if(!v){ v="U-"+Math.random().toString(36).slice(2,8); localStorage.setItem(k,v) } return v; })();
 
-// โหลดรายการตามวัน แล้วค่อยอัปเดต UI ฝั่งคุณ
-async function onDateChange(selectedDate, selectedRoomId = "") {
-  const list = await gsList({ dates: [selectedDate], roomId: selectedRoomId });
-  // TODO: เรียกฟังก์ชันเรนเดอร์ของคุณ เช่น:
-  // renderDayBookings(list); updateRoomStatusWith(list);
+// Room data (คงโครงสร้างเดิมของไฟล์คุณ)
+const rooms = [
+  { id: 'usr',       name: 'ห้องUSR(1-101)',                 capacity: 70,  location: 'อาคาร 1 ชั้น 1' },
+  { id: 'seminar',   name: 'ห้องสัมมนา',                     capacity: 80,  location: 'อาคาร 3 ชั้น 1' },
+  { id: 'pukya1',    name: 'ห้องประชุมพุคยาภรณ์ 1',        capacity: 360, location: 'อาคาร 3 ชั้น 1' },
+  { id: 'pukya2',    name: 'ห้องประชุมพุคยาภรณ์ 2 (3-206)', capacity: 120, location: 'อาคาร 3 ชั้น 2' },
+  { id: 'executive', name: 'ห้องประชุมผู้บริหาร 3-202',     capacity: 40,  location: 'อาคาร 3 ชั้น 2' }
+];
+
+/* ==================== Helpers ==================== */
+function iso(d){ const z=d.getTimezoneOffset(); const l=new Date(d.getTime()-z*60000); return l.toISOString().slice(0,10); }
+function timeOverlap(s1, e1, s2, e2){ return s1 < e2 && e1 > s2; }
+function tonight(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+
+/* ==================== INIT ==================== */
+async function init() {
+  generateTimeOptions();
+  // default เลือกวันนี้
+  selectedDates = [new Date()];
+  generateCalendar();
+  // ตั้งค่าเวลาเริ่ม/สิ้นสุด
+  document.getElementById('startTime').value='09:00';
+  document.getElementById('endTime').value='10:00';
+  // โหลดรายการของวันที่เลือกจากชีต
+  await refreshSelectedDatesFromSheet();
+  updateRoomList();
+  await updateMyBookings();
+  await updateStatistics();
+  populateRoomFilters();
+  await updateCalendarView();
 }
 
-// กดยืนยันการจอง
-async function confirmBooking({ roomId, roomName, date, start, end, dept, purpose }) {
-  const payload = { roomId, roomName, date, start, end, dept, purpose, userId: USER_ID };
-  const saved = await gsCreate(payload);
-  // TODO: ปิด modal/รีเฟรช UI
-  alert("จองสำเร็จ! เลขที่: " + saved.id);
-  await onDateChange(date);
+/* ==================== Time Options ==================== */
+function generateTimeOptions() {
+  const startSelect = document.getElementById('startTime');
+  const endSelect = document.getElementById('endTime');
+  startSelect.innerHTML = ''; endSelect.innerHTML = '';
+  for (let hour = 9; hour <= 20; hour++) {
+    for (let minute of [0, 30]) {
+      if (hour === 20 && minute === 30) continue;
+      const t = `${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
+      startSelect.innerHTML += `<option value="${t}">${t}</option>`;
+      endSelect.innerHTML   += `<option value="${t}">${t}</option>`;
+    }
+  }
 }
 
-// ยกเลิกการจอง
-async function cancelMyBooking(bookingId) {
-  const code = prompt('หากต้องการยกเลิกโปรดติดต่องานวิชาการ และกรอกรหัส 1234');
-  if (!code) return;
-  await gsCancel(bookingId, code);
-  alert('ยกเลิกสำเร็จแล้ว');
-  // TODO: รีเฟรช “รายการของฉัน” และปฏิทิน
+/* ==================== Calendar (date picker on booking page) ==================== */
+function generateCalendar() {
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('currentMonth').textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear() + 543}`;
+
+  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const startDate = new Date(firstDay); startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+  const calendarDays = document.getElementById('calendarDays'); calendarDays.innerHTML='';
+  const t0 = tonight();
+
+  for (let i = 0; i < 42; i++) {
+    const date = new Date(startDate); date.setDate(startDate.getDate() + i);
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day text-center p-2 rounded-lg cursor-pointer';
+    cell.textContent = date.getDate();
+
+    if (date.getMonth() !== currentDate.getMonth()) {
+      cell.className += ' text-gray-400';
+    } else if (date < t0) {
+      cell.className += ' text-gray-400 cursor-not-allowed';
+    } else {
+      cell.onclick = () => toggleDateSelection(date);
+      if (selectedDates.some(d => d.toDateString() === date.toDateString())) cell.className += ' selected';
+      if (date.toDateString() === (new Date()).toDateString()) cell.className += ' bg-yellow-100 border border-yellow-300';
+    }
+    calendarDays.appendChild(cell);
+  }
 }
+function changeMonth(direction){ currentDate.setMonth(currentDate.getMonth()+direction); generateCalendar(); }
+async function toggleDateSelection(date){
+  const t0 = tonight(); if (date < t0) return;
+  const idx = selectedDates.findIndex(d => d.toDateString() === date.toDateString());
+  if (idx>-1) selectedDates.splice(idx,1); else selectedDates.push(new Date(date));
+  generateCalendar();
+  await refreshSelectedDatesFromSheet();
+  updateRoomList();
+}
+
+/* ==================== Fetchers ==================== */
+async function refreshSelectedDatesFromSheet(){
+  bookings = [];
+  if (!selectedDates.length) return;
+  const dates = selectedDates.map(d => iso(d)).sort();
+  const chunk=10;
+  for (let i=0;i<dates.length;i+=chunk){
+    const part = dates.slice(i,i+chunk);
+    const list = await gsList({ dates: part });
+    bookings = bookings.concat(list||[]);
+  }
+}
+async function fetchMonthBookings(y, m, roomId=''){
+  const last = new Date(y, m+1, 0).getDate();
+  const dates = Array.from({length:last}, (_,i)=> iso(new Date(y, m, i+1)));
+  let all=[]; const chunk=10;
+  for (let i=0;i<dates.length;i+=chunk){
+    const part=dates.slice(i,i+chunk);
+    const list=await gsList({ dates: part, roomId });
+    all = all.concat(list||[]);
+  }
+  return all;
+}
+async function fetchRecentBookings(days=180){
+  const start = new Date(); start.setDate(start.getDate()-days);
+  const end = new Date();   end.setDate(end.getDate()+days);
+  const dates=[]; for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) dates.push(iso(d));
+  let out=[]; const chunk=10;
+  for (let i=0;i<dates.length;i+=chunk){
+    const part=dates.slice(i,i+chunk);
+    const list=await gsList({ dates: part });
+    out = out.concat(list||[]);
+  }
+  return out;
+}
+
+/* ==================== Room list & status ==================== */
+function updateRoomList(){
+  const roomList = document.getElementById('roomList');
+  const startTime = document.getElementById('startTime').value;
+  const endTime   = document.getElementById('endTime').value;
+  roomList.innerHTML = '';
+
+  rooms.forEach(room => {
+    let isAvailable = true;
+    if (selectedDates.length && startTime && endTime){
+      for (const d of selectedDates){
+        const ds = iso(d);
+        const conflict = bookings.some(b =>
+          String(b.roomId) === String(room.id) &&
+          String(b.date)   === ds &&
+          b.status !== 'cancelled' &&
+          timeOverlap(startTime, endTime, b.start || b.startTime, b.end || b.endTime)
+        );
+        if (conflict){ isAvailable=false; break; }
+      }
+    }
+
+    const div = document.createElement('div');
+    div.className = 'room-card p-4 rounded-lg cursor-pointer ' + (isAvailable ? 'room-available' : 'room-booked');
+    div.innerHTML = `
+      <div class="flex justify-between items-start mb-3">
+        <h4 class="font-semibold text-lg text-gray-800">${room.name}</h4>
+        <span class="text-sm ${isAvailable ? 'text-green-600' : 'text-red-600'}">
+          ${isAvailable ? '✅ ว่าง' : '❌ จองแล้ว'}
+        </span>
+      </div>
+      <p class="text-gray-600 text-sm mb-2">📍 ${room.location}</p>
+      <p class="text-gray-600 text-sm mb-3">👥 จุได้ ${room.capacity} คน</p>
+      ${isAvailable ? '<p class="text-cyan-600 text-sm font-medium">คลิกเพื่อจอง</p>' : ''}
+    `;
+    if (isAvailable && selectedDates.length && startTime && endTime){
+      div.onclick = () => openBookingModal(room);
+    }
+    roomList.appendChild(div);
+  });
+}
+
+/* ==================== Booking Modal & Submit ==================== */
+function openBookingModal(room){
+  selectedRoomForBooking = room;
+  document.getElementById('selectedRoom').value = room.name;
+  document.getElementById('selectedDate').value = selectedDates.map(d=> d.toLocaleDateString('th-TH')).join(', ');
+  document.getElementById('selectedTime').value = `${document.getElementById('startTime').value} - ${document.getElementById('endTime').value}`;
+  const m = document.getElementById('bookingModal'); m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeBookingModal(){
+  const m = document.getElementById('bookingModal'); m.classList.add('hidden'); m.classList.remove('flex');
+  document.getElementById('bookingForm').reset();
+}
+async function submitBooking(event){
+  event.preventDefault();
+  const department = document.getElementById('department').value.trim();
+  const purpose    = document.getElementById('purpose').value.trim();
+  const startTime  = document.getElementById('startTime').value;
+  const endTime    = document.getElementById('endTime').value;
+  if (!department || !purpose){ alert('กรอกข้อมูลให้ครบ'); return; }
+
+  try{
+    for (const d of selectedDates){
+      const payload = {
+        userId: USER_ID,
+        roomId: selectedRoomForBooking.id,
+        roomName: selectedRoomForBooking.name,
+        date: iso(d),
+        start: startTime,
+        end: endTime,
+        dept: department,
+        purpose: purpose
+      };
+      const saved = await gsCreate(payload);
+      bookings.push(saved); // update cache
+    }
+    closeBookingModal();
+    await refreshSelectedDatesFromSheet();
+    updateRoomList(); await updateMyBookings(); await updateStatistics(); await updateCalendarView();
+    alert('✅ จองห้องประชุมเรียบร้อยแล้ว!');
+  }catch(e){
+    alert('ไม่สามารถบันทึกได้: ' + e.message);
+  }
+}
+
+/* ==================== Navigation (pages) ==================== */
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById(pageId+'Page').classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(btn=>{
+    btn.className='nav-btn px-6 py-2 rounded-lg font-medium transition-all duration-200 text-cyan-600 hover:bg-cyan-50';
+  });
+  if (window.event && window.event.target){
+    window.event.target.className='nav-btn px-6 py-2 rounded-lg font-medium transition-all duration-200 bg-cyan-500 text-white';
+  }
+  if (pageId==='myBookings') updateMyBookings();
+  if (pageId==='statistics') updateStatistics();
+  if (pageId==='allBookings') updateCalendarView();
+}
+
+/* ==================== My Bookings ==================== */
+async function updateMyBookings(){
+  let all = await fetchRecentBookings(180);
+  all = all.filter(b=> b.status !== 'cancelled');
+  let view = all.filter(b=> String(b.userId||'') === String(USER_ID));
+
+  const roomFilter = document.getElementById('roomFilter')?.value || '';
+  const dateFilter = document.getElementById('dateFilter')?.value || '';
+  if (roomFilter) view = view.filter(b=> String(b.roomId)===String(roomFilter));
+  if (dateFilter) view = view.filter(b=> String(b.date)===String(dateFilter));
+
+  const box = document.getElementById('myBookingsList');
+  if (!view.length){ box.innerHTML='<p class="text-gray-500 text-center py-8">ยังไม่มีรายการจอง</p>'; return; }
+
+  view.sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0) || ((a.start||a.startTime)<(b.start||b.startTime)?-1:1));
+
+  box.innerHTML = view.map(b=>`
+    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div class="flex justify-between items-start">
+        <div class="flex-1">
+          <h4 class="font-semibold text-lg text-gray-800">${b.roomName || b.roomId}</h4>
+          <p class="text-gray-600 mt-1">📅 ${new Date(b.date).toLocaleDateString('th-TH')}</p>
+          <p class="text-gray-600">⏰ ${(b.start||b.startTime)} - ${(b.end||b.endTime)}</p>
+          <p class="text-gray-600">🏢 ${b.dept || b.department || '-'}</p>
+          <p class="text-gray-600 mt-2">${b.purpose||'-'}</p>
+        </div>
+        <div class="flex flex-col space-y-2">
+          ${b.status!=='cancelled'
+            ? `<button onclick="openCancelModal('${b.id}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 transition-colors">❌ ยกเลิก</button>`
+            : '<span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">ยกเลิกแล้ว</span>'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+function applyFilters(){ updateMyBookings(); }
+
+/* ==================== Cancel booking ==================== */
+function openCancelModal(bookingId){
+  currentBookingToCancel = bookingId;
+  const m = document.getElementById('cancelModal'); m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeCancelModal(){
+  const m = document.getElementById('cancelModal'); m.classList.add('hidden'); m.classList.remove('flex');
+  document.getElementById('cancelCode').value=''; document.getElementById('cancelError').classList.add('hidden');
+  currentBookingToCancel = null;
+}
+async function confirmCancel(){
+  const code = document.getElementById('cancelCode').value;
+  const err = document.getElementById('cancelError');
+  if (code!=='1234'){ err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  try{
+    await gsCancel(currentBookingToCancel, code);
+    bookings = bookings.map(b=> b.id==currentBookingToCancel ? {...b, status:'cancelled'} : b);
+    await updateMyBookings(); updateRoomList(); await updateStatistics(); await updateCalendarView();
+    alert('✅ ยกเลิกการจองเรียบร้อยแล้ว');
+  }catch(e){ alert('ยกเลิกไม่สำเร็จ: '+ e.message); }
+  closeCancelModal();
+}
+
+/* ==================== Statistics ==================== */
+async function updateStatistics(){
+  const y = calendarCurrentDate.getFullYear(), m = calendarCurrentDate.getMonth();
+  const monthData = await fetchMonthBookings(y, m, '');
+  const confirmed = monthData.filter(b=> b.status!=='cancelled');
+
+  document.getElementById('totalBookings').textContent = confirmed.length;
+
+  const roomUsage = {};
+  confirmed.forEach(b => { const key = b.roomId; roomUsage[key] = (roomUsage[key]||0)+1; });
+  let mostRoom = '-', max = 0;
+  Object.entries(roomUsage).forEach(([rid,c])=>{ if(c>max){max=c; mostRoom = (rooms.find(r=>r.id===rid)?.name || rid);} });
+  document.getElementById('mostUsedRoom').textContent = mostRoom;
+  document.getElementById('mostUsedRoomCount').textContent = `${max} ครั้ง`;
+
+  const timeUsage = {};
+  confirmed.forEach(b => { const t=(b.start||b.startTime||'').slice(0,2)+':00'; timeUsage[t]=(timeUsage[t]||0)+1; });
+  let peak='-', tmax=0; Object.entries(timeUsage).forEach(([t,c])=>{ if(c>tmax){tmax=c; peak=t;} });
+  document.getElementById('peakTime').textContent = peak;
+  document.getElementById('peakTimeCount').textContent = `${tmax} ครั้ง`;
+
+  const roomStats = document.getElementById('roomStats');
+  roomStats.innerHTML = rooms.map(room => {
+    const usage = roomUsage[room.id] || 0;
+    const pct = confirmed.length ? (usage/confirmed.length*100).toFixed(1) : 0;
+    return `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+      <span class="font-medium">${room.name}</span>
+      <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-600">${usage} ครั้ง (${pct}%)</span>
+        <div class="w-20 bg-gray-200 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ==================== Monthly Calendar (All bookings) ==================== */
+async function updateCalendarView(){
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('calendarCurrentMonth').textContent = `${monthNames[calendarCurrentDate.getMonth()]} ${calendarCurrentDate.getFullYear() + 543}`;
+
+  const firstDay = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth(), 1);
+  const startDate = new Date(firstDay); startDate.setDate(startDate.getDate() - firstDay.getDay());
+  const calendarGrid = document.getElementById('calendarGrid'); calendarGrid.innerHTML='';
+
+  const roomFilter = document.getElementById('calendarRoomFilter').value || '';
+  const y = calendarCurrentDate.getFullYear(), m = calendarCurrentDate.getMonth();
+  const monthData = await fetchMonthBookings(y, m, roomFilter);
+  for (let i=0;i<42;i++){
+    const date = new Date(startDate); date.setDate(startDate.getDate()+i);
+    const dateStr = iso(date);
+    const inMonth = date.getMonth()===calendarCurrentDate.getMonth();
+    const list = monthData.filter(b=> String(b.date)===dateStr && b.status!=='cancelled' && (!roomFilter || String(b.roomId)===String(roomFilter)));
+    const dayEl = document.createElement('div');
+    dayEl.className = 'min-h-32 p-2 border border-gray-200 rounded-lg' + (inMonth?'':' bg-gray-50');
+    dayEl.innerHTML = `
+      <div class="font-semibold text-sm mb-1 ${inMonth?'':'text-gray-400'}">${date.getDate()}</div>
+      ${list.map(b=>`
+        <div class="text-xs bg-cyan-100 text-cyan-800 p-1 rounded mb-1" title="ห้อง: ${b.roomName||b.roomId}
+เวลา: ${(b.start||b.startTime)}-${(b.end||b.endTime)}
+วัตถุประสงค์: ${b.purpose||''}">
+          <div class="font-medium truncate">${(b.start||b.startTime)}-${(b.end||b.endTime)}</div>
+          <div class="truncate">${b.roomName||b.roomId}</div>
+          <div class="truncate text-cyan-600">${b.purpose||''}</div>
+        </div>
+      `).join('')}
+    `;
+    calendarGrid.appendChild(dayEl);
+  }
+}
+function changeCalendarMonth(direction){ calendarCurrentDate.setMonth(calendarCurrentDate.getMonth()+direction); updateCalendarView(); }
+
+/* ==================== Filters & Events ==================== */
+function populateRoomFilters(){
+  const roomFilter = document.getElementById('roomFilter');
+  const calendarRoomFilter = document.getElementById('calendarRoomFilter');
+  rooms.forEach(r => {
+    const opt = `<option value="${r.id}">${r.name}</option>`;
+    roomFilter.innerHTML += opt; calendarRoomFilter.innerHTML += opt;
+  });
+}
+document.getElementById('startTime').addEventListener('change', ()=>{ updateRoomList(); });
+document.getElementById('endTime').addEventListener('change', ()=>{ updateRoomList(); });
+
+/* ==================== Boot ==================== */
+init();
 </script>
-</body>
+{function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98438ffbb12d4b64',t:'MTc1ODczMDMzNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
-
-
