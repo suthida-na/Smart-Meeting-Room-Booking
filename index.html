@@ -894,5 +894,88 @@
         // Initialize the application when the page loads
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98439cdc056945b2',t:'MTc1ODczMDg2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98439cdc056945b2',t:'MTc1ODczMDg2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>
+// ★★ ใส่ URL Web App ที่ได้จาก Deploy Apps Script ★★
+const WEB_APP_URL = "https://script.google.com/macros/s/xxxxxxxxxxxxxxxxxxxxxxxx/exec";
+
+/* ======== ฟังก์ชันเรียก Apps Script ======== */
+// ดึงรายชื่อห้อง (ถ้าอยากโหลดจาก GAS)
+async function gsRooms() {
+  const r = await fetch(WEB_APP_URL + "?action=rooms");
+  const j = await r.json();
+  return j.rooms || [];
+}
+
+// ดึงรายการจองตามวัน (รองรับส่งหลายวันด้วย)
+async function gsList({ dates = [], roomId = "" } = {}) {
+  const p = new URLSearchParams({ action: "list" });
+  if (dates.length === 1) p.append("date", dates[0]);
+  if (dates.length > 1) p.append("dates", dates.join(","));
+  if (roomId) p.append("roomId", roomId);
+  const r = await fetch(`${WEB_APP_URL}?${p.toString()}`);
+  const j = await r.json();
+  return j.bookings || [];
+}
+
+// สร้างการจอง (ใช้ text/plain เพื่อเลี่ยง preflight/CORS)
+async function gsCreate(booking) {
+  const r = await fetch(WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "create", booking })
+  });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "สร้างไม่สำเร็จ");
+  return j.booking;
+}
+
+// ยกเลิกการจอง (ต้องมี code = 1234)
+async function gsCancel(id, code = "1234") {
+  const r = await fetch(WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "cancel", id, code })
+  });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "ยกเลิกไม่สำเร็จ");
+  return j;
+}
+
+/* ======== ตัวช่วยฝั่งหน้าเว็บ ======== */
+// userId แบบง่าย เก็บใน localStorage
+const USER_ID = (() => {
+  const k = "smart-meeting-user";
+  let v = localStorage.getItem(k);
+  if (!v) { v = "U-" + Math.random().toString(36).slice(2,8); localStorage.setItem(k, v); }
+  return v;
+})();
+
+// โหลดรายการตามวัน แล้วค่อยอัปเดต UI ฝั่งคุณ
+async function onDateChange(selectedDate, selectedRoomId = "") {
+  const list = await gsList({ dates: [selectedDate], roomId: selectedRoomId });
+  // TODO: เรียกฟังก์ชันเรนเดอร์ของคุณ เช่น:
+  // renderDayBookings(list); updateRoomStatusWith(list);
+}
+
+// กดยืนยันการจอง
+async function confirmBooking({ roomId, roomName, date, start, end, dept, purpose }) {
+  const payload = { roomId, roomName, date, start, end, dept, purpose, userId: USER_ID };
+  const saved = await gsCreate(payload);
+  // TODO: ปิด modal/รีเฟรช UI
+  alert("จองสำเร็จ! เลขที่: " + saved.id);
+  await onDateChange(date);
+}
+
+// ยกเลิกการจอง
+async function cancelMyBooking(bookingId) {
+  const code = prompt('หากต้องการยกเลิกโปรดติดต่องานวิชาการ และกรอกรหัส 1234');
+  if (!code) return;
+  await gsCancel(bookingId, code);
+  alert('ยกเลิกสำเร็จแล้ว');
+  // TODO: รีเฟรช “รายการของฉัน” และปฏิทิน
+}
+</script>
+</body>
 </html>
+
