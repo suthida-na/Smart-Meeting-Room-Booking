@@ -322,7 +322,12 @@
         <div class="bg-white rounded-xl shadow-2xl p-8 m-4 max-w-md w-full">
             <h3 class="text-xl font-semibold text-gray-800 mb-4">❌ ยกเลิกการจอง</h3>
             <p class="text-gray-600 mb-4">หากต้องการยกเลิกโปรดติดต่องานวิชาการ</p>
-            <p class="text-sm text-gray-500 mb-4">รหัสอ้างอิง: <span class="font-mono bg-gray-100 px-2 py-1 rounded">1234</span></p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">กรุณาใส่รหัสยืนยัน</label>
+                <input type="password" id="cancelCode" placeholder="รหัสยืนยัน" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                <p id="cancelError" class="text-red-500 text-sm mt-1 hidden">รหัสไม่ถูกต้อง</p>
+            </div>
             
             <div class="flex space-x-3">
                 <button onclick="closeCancelModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
@@ -718,11 +723,23 @@
         function closeCancelModal() {
             document.getElementById('cancelModal').classList.add('hidden');
             document.getElementById('cancelModal').classList.remove('flex');
+            document.getElementById('cancelCode').value = '';
+            document.getElementById('cancelError').classList.add('hidden');
             currentBookingToCancel = null;
         }
 
         // Confirm cancel
         function confirmCancel() {
+            const cancelCode = document.getElementById('cancelCode').value;
+            const errorElement = document.getElementById('cancelError');
+            
+            if (cancelCode !== '1234') {
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            errorElement.classList.add('hidden');
+            
             if (currentBookingToCancel) {
                 const bookingIndex = bookings.findIndex(b => b.id == currentBookingToCancel);
                 if (bookingIndex > -1) {
@@ -828,7 +845,7 @@
                 date.setDate(startDate.getDate() + i);
                 
                 const dayElement = document.createElement('div');
-                dayElement.className = 'min-h-24 p-2 border border-gray-200 rounded-lg';
+                dayElement.className = 'min-h-32 p-2 border border-gray-200 rounded-lg';
                 
                 if (date.getMonth() !== calendarCurrentDate.getMonth()) {
                     dayElement.className += ' bg-gray-50';
@@ -844,8 +861,10 @@
                 dayElement.innerHTML = `
                     <div class="font-semibold text-sm mb-1 ${date.getMonth() !== calendarCurrentDate.getMonth() ? 'text-gray-400' : ''}">${date.getDate()}</div>
                     ${dayBookings.map(booking => `
-                        <div class="text-xs bg-cyan-100 text-cyan-800 p-1 rounded mb-1 truncate" title="${booking.purpose}">
-                            ${booking.startTime} ${booking.roomName}
+                        <div class="text-xs bg-cyan-100 text-cyan-800 p-1 rounded mb-1" title="ห้อง: ${booking.roomName}\nเวลา: ${booking.startTime}-${booking.endTime}\nวัตถุประสงค์: ${booking.purpose}">
+                            <div class="font-medium truncate">${booking.startTime}-${booking.endTime}</div>
+                            <div class="truncate">${booking.roomName}</div>
+                            <div class="truncate text-cyan-600">${booking.purpose}</div>
                         </div>
                     `).join('')}
                 `;
@@ -866,5 +885,5 @@
         // Initialize the application when the page loads
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9843838cf59845b8',t:'MTc1ODcyOTgyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98438ffbb12d4b64',t:'MTc1ODczMDMzNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
